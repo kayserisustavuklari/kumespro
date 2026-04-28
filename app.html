@@ -1645,129 +1645,174 @@ function yedekYukle(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  if (!confirm('"' + file.name + '" dosyasını yüklemek istiyor musunuz?\n\n' +
-    'Mevcut TÜM verileriniz silinip yedekteki verilerle değiştirilecek!\n' +
-    'Bu işlem geri alınamaz.')) {
+  if (!confirm('"' + file.name + '" dosyasini yuklemek istiyor musunuz?\n\nMevcut TUM verileriniz silinip yedekteki verilerle degistirilecek!\nBu islem geri alinamaz.')) {
     event.target.value = '';
     return;
   }
 
   const reader = new FileReader();
   reader.onload = async function(e) {
+    const overlay = document.getElementById('loadingOverlay');
+    const ltEl    = document.getElementById('loadingText');
+    overlay.classList.remove('hidden');
+    ltEl.textContent = 'Yedek dosyasi okunuyor...';
+
     try {
       const parsed = JSON.parse(e.target.result);
-      if (!parsed.veri) { alert('❌ Geçersiz yedek dosyası!'); return; }
 
-      const veri = parsed.veri;
+      // ── Eski ve yeni format desteği ──────────────────────
+      // Yeni format: { veri: { kumesler, kuluckalar, ... } }
+      // Eski format: { kumesler, kuluckalar, ... } veya
+      //              { veri: { kumesler, ... } } (localStorage'dan)
+      let veri = null;
+      if (parsed.veri && parsed.veri.kumesler !== undefined) {
+        veri = parsed.veri;
+      } else if (parsed.kumesler !== undefined) {
+        veri = parsed;
+      } else {
+        alert('Gecersiz yedek dosyasi! kumesler verisi bulunamadi.');
+        overlay.classList.add('hidden');
+        event.target.value = '';
+        return;
+      }
 
-      // Loading göster
-      const overlay = document.getElementById('loadingOverlay');
-      const ltEl    = document.getElementById('loadingText');
-      overlay.classList.remove('hidden');
-      ltEl.textContent = 'Yedek yükleniyor... (0/' + [
-        veri.kumesler, veri.kuluckalar, veri.civcivUniteleri,
-        veri.satislar, veri.giderler
-      ].reduce((s,a) => s + (a||[]).length, 0) + ' kayıt)';
+      const kumesler        = veri.kumesler        || [];
+      const kuluckalar      = veri.kuluckalar      || [];
+      const civcivUniteleri = veri.civcivUniteleri || [];
+      const satislar        = veri.satislar        || [];
+      const giderler        = veri.giderler        || [];
 
-      // ── Supabase'deki mevcut veriyi sil ──────────────────
+      const toplamKayit = kumesler.length + kuluckalar.length +
+        civcivUniteleri.length + satislar.length + giderler.length;
+
+      console.log('[Yedek] Format:', parsed.versiyon || 'eski',
+        '| Toplam kayit:', toplamKayit);
+
+      // ── Mevcut veriyi sil (sırayla, FK kısıtlamaları için) ─
       ltEl.textContent = 'Mevcut veriler temizleniyor...';
       const uid = currentUser.id;
 
-      await Promise.all([
+      const silSonuclari = await Promise.allSettled([
         sb.from('giderler').delete().eq('user_id', uid),
         sb.from('satislar').delete().eq('user_id', uid),
         sb.from('kuluckalar').delete().eq('user_id', uid),
-        sb.from('kumesler').delete().eq('user_id', uid),
-        sb.from('civciv_uniteleri').delete().eq('user_id', uid)
+        sb.from('civciv_uniteleri').delete().eq('user_id', uid),
+        sb.from('kumesler').delete().eq('user_id', uid)
       ]);
+      silSonuclari.forEach((r, i) => {
+        if (r.status === 'rejected' || r.value?.error) {
+          console.warn('[Yedek] Silme uyarisi:', i, r.reason || r.value?.error);
+        }
+      });
 
-      // ── Yedekteki veriyi sırayla ekle ────────────────────
-
-      // 1. Kümesler
-      ltEl.textContent = 'Kumesler yukleniyor...';
-      const kumesIdMap = {}; // eski id -> yeni id
-      for (const k of (veri.kumesler || [])) {
-        const eskiId = k.id;
+      // ── Kümesler ──────────────────────────────────────────
+      ltEl.textContent = 'Kumesler yukleniyor... (0/' + kumesler.length + ')';
+      const kumesIdMap = {};
+      for (let i = 0; i < kumesler.length; i++) {
+        const k = kumesler[i];
+        ltEl.textContent = 'Kumesler: ' + (i+1) + '/' + kumesler.length;
         const { data, error } = await sb.from('kumesler').insert({
           user_id:    uid,
-          ad:         k.ad,
+          ad:         k.ad || 'Kümes ' + (i+1),
           tur:        k.tur || 'tavuk',
           irklar:     k.irklar || [],
           not_:       k.not || null,
           hareketler: k.hareketler || []
         }).select('id').single();
-        if (!error && data) kumesIdMap[eskiId] = data.id;
+        if (error) {
+          console.warn('[Yedek] Kümes ekle hatası:', error.message);
+        } else if (data) {
+          kumesIdMap[k.id] = data.id;
+        }
       }
 
-      // 2. Kuluçkalar
-      ltEl.textContent = 'Kuluckalar yukleniyor...';
-      for (const k of (veri.kuluckalar || [])) {
-        await sb.from('kuluckalar').insert({
+      // ── Kuluçkalar ────────────────────────────────────────
+      ltEl.textContent = 'Kuluckalar yukleniyor... (0/' + kuluckalar.length + ')';
+      for (let i = 0; i < kuluckalar.length; i++) {
+        const k = kuluckalar[i];
+        ltEl.textContent = 'Kuluckalar: ' + (i+1) + '/' + kuluckalar.length;
+        const { error } = await sb.from('kuluckalar').insert({
           user_id:        uid,
-          ad:             k.ad,
-          baslangic:      k.baslangic,
+          ad:             k.ad || 'Kulucka ' + (i+1),
+          baslangic:      k.baslangic || new Date().toISOString().split('T')[0],
           sure:           k.sure || 21,
           kaynaklar:      k.kaynaklar || [],
-          toplam_yumurta: k.toplamYumurta || 0,
+          toplam_yumurta: k.toplamYumurta || k.toplam_yumurta || 0,
           not_:           k.not || null,
           durum:          k.durum || 'devam',
           cikim:          k.cikim || null
         });
+        if (error) console.warn('[Yedek] Kulucka hatasi:', error.message);
       }
 
-      // 3. Civciv Üniteleri
+      // ── Civciv Üniteleri ──────────────────────────────────
       ltEl.textContent = 'Civciv uniteleri yukleniyor...';
-      for (const u of (veri.civcivUniteleri || [])) {
-        await sb.from('civciv_uniteleri').insert({
+      for (let i = 0; i < civcivUniteleri.length; i++) {
+        const u = civcivUniteleri[i];
+        const { error } = await sb.from('civciv_uniteleri').insert({
           user_id:    uid,
-          ad:         u.ad,
+          ad:         u.ad || 'Civciv Unitesi',
           adet:       u.adet || 0,
           hareketler: u.hareketler || []
         });
+        if (error) console.warn('[Yedek] Unite hatasi:', error.message);
+      }
+      // Civciv ünitesi yoksa varsayılan ekle
+      if (civcivUniteleri.length === 0) {
+        await sb.from('civciv_uniteleri').insert({
+          user_id: uid, ad: 'Genel Civciv Unitesi', adet: 0, hareketler: []
+        });
       }
 
-      // 4. Satışlar
-      ltEl.textContent = 'Satislar yukleniyor...';
-      for (const s of (veri.satislar || [])) {
-        await sb.from('satislar').insert({
+      // ── Satışlar ──────────────────────────────────────────
+      ltEl.textContent = 'Satislar yukleniyor... (0/' + satislar.length + ')';
+      for (let i = 0; i < satislar.length; i++) {
+        const s = satislar[i];
+        ltEl.textContent = 'Satislar: ' + (i+1) + '/' + satislar.length;
+        const { error } = await sb.from('satislar').insert({
           user_id: uid,
           musteri: s.musteri || null,
-          tarih:   s.tarih,
+          tarih:   s.tarih || new Date().toISOString().split('T')[0],
           urunler: s.urunler || [],
           toplam:  s.toplam || 0,
           not_:    s.not || null
         });
+        if (error) console.warn('[Yedek] Satis hatasi:', error.message);
       }
 
-      // 5. Giderler
-      ltEl.textContent = 'Giderler yukleniyor...';
-      for (const g of (veri.giderler || [])) {
+      // ── Giderler ──────────────────────────────────────────
+      ltEl.textContent = 'Giderler yukleniyor... (0/' + giderler.length + ')';
+      for (let i = 0; i < giderler.length; i++) {
+        const g = giderler[i];
+        ltEl.textContent = 'Giderler: ' + (i+1) + '/' + giderler.length;
         const yeniKumesId = g.kumesId ? (kumesIdMap[g.kumesId] || null) : null;
-        await sb.from('giderler').insert({
+        const { error } = await sb.from('giderler').insert({
           user_id:  uid,
           tur:      g.tur || 'diger',
           aciklama: g.aciklama || null,
-          tutar:    g.tutar,
-          tarih:    g.tarih,
+          tutar:    parseFloat(g.tutar) || 0,
+          tarih:    g.tarih || new Date().toISOString().split('T')[0],
           kumes_id: yeniKumesId
         });
+        if (error) console.warn('[Yedek] Gider hatasi:', error.message);
       }
 
-      // ── Veriyi yenile ve uygulamayı göster ───────────────
-      ltEl.textContent = 'Tum veriler yuklendi, yenileniyor...';
+      // ── Bitir ─────────────────────────────────────────────
+      ltEl.textContent = 'Tamamlandi! Veriler yenileniyor...';
       await dbYukle();
       overlay.classList.add('hidden');
 
-      const toplamKayit = D.kumesler.length + D.kuluckalar.length +
+      const yuklenen = D.kumesler.length + D.kuluckalar.length +
         D.civcivUniteleri.length + D.satislar.length + D.giderler.length;
 
-      toast('✅ Yedek basariyla yuklendi! ' + toplamKayit + ' kayit geri yuklendi.', 'ok', 4000);
+      toast('Yedek yuklendi! ' + yuklenen + ' kayit geri yuklendi.', 'ok', 4000);
       goTab('anasayfa');
 
     } catch(err) {
-      console.error('Yedek yukleme hatasi:', err);
-      document.getElementById('loadingOverlay').classList.add('hidden');
-      alert('Yedek yukleme hatasi: ' + err.message);
+      console.error('[Yedek] HATA:', err);
+      overlay.classList.add('hidden');
+      alert('Yedek yukleme hatasi: ' + err.message +
+        '\n\nKonsolda detaylari gorebilirsiniz (F12).');
     }
     event.target.value = '';
   };
