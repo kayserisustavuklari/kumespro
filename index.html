@@ -201,7 +201,7 @@ init();
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/kumespro/sw.js', {scope: '/kumespro/'})
+        navigator.serviceWorker.register('/kumespro/sw.js', {scope: '/kumespro/'}).then(r=>console.log('[SW] v6.5'))
           .then(r => console.log('[SW] Registered:', r.scope))
           .catch(e => console.warn('[SW] Error:', e));
       });
