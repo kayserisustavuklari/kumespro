@@ -918,14 +918,14 @@ async function dbYukle() {
   D.satislar = (s.data || []).map(r => ({
     id: r.id, musteri: r.musteri, tarih: r.tarih,
     urunler: r.urunler || [], toplam: parseFloat(r.toplam) || 0,
-    odenen: parseFloat(r.odened || r.odenen) || parseFloat(r.toplam) || 0,
+    odenen: parseFloat(r.odenen || r.odenen) || parseFloat(r.toplam) || 0,
     kalan: parseFloat(r.kalan) || 0,
     not: r.not_
   }));
   D.giderler = (g.data || []).map(r => ({
     id: r.id, tur: r.tur, aciklama: r.aciklama,
     tutar: parseFloat(r.tutar) || 0, tarih: r.tarih, kumesId: r.kumes_id,
-    odenen: parseFloat(r.odened || r.odenen) || parseFloat(r.tutar) || 0,
+    odenen: parseFloat(r.odenen || r.odenen) || parseFloat(r.tutar) || 0,
     kalan: parseFloat(r.kalan) || 0
   }));
 }
@@ -1026,7 +1026,7 @@ async function dbSatisEkle(s) {
     const { data, error } = await sb.from('satislar').insert({
       user_id: currentUser.id, musteri: s.musteri || null, tarih: s.tarih,
       urunler: s.urunler || [], toplam: s.toplam || 0,
-      odened: s.odenen || 0,
+      odenen: s.odenen || 0,
       not_: s.not || null
     }).select().single();
     if (error) throw error;
@@ -1040,7 +1040,7 @@ async function dbSatisGuncelle(s) {
     const { error } = await sb.from('satislar').update({
       musteri: s.musteri || null, tarih: s.tarih,
       urunler: s.urunler || [], toplam: s.toplam || 0,
-      odened: s.odenen || 0,
+      odenen: s.odenen || 0,
       not_: s.not || null
     }).eq('id', s.id);
     if (error) throw error;
@@ -1063,7 +1063,7 @@ async function dbGiderEkle(g) {
     const { data, error } = await sb.from('giderler').insert({
       user_id: currentUser.id, tur: g.tur, aciklama: g.aciklama || null,
       tutar: g.tutar, tarih: g.tarih, kumes_id: g.kumesId || null,
-      odened: g.odenen || 0
+      odenen: g.odenen || 0
     }).select().single();
     if (error) throw error;
     g.id = data.id;
@@ -1076,7 +1076,7 @@ async function dbGiderGuncelle(g) {
     const { error } = await sb.from('giderler').update({
       tur: g.tur, aciklama: g.aciklama || null,
       tutar: g.tutar, tarih: g.tarih, kumes_id: g.kumesId || null,
-      odened: g.odenen || 0
+      odenen: g.odenen || 0
     }).eq('id', g.id);
     if (error) throw error;
     g.kalan = g.tutar - (g.odenen || 0);
@@ -1165,7 +1165,7 @@ function rDash() {
   document.getElementById('dAlert').innerHTML = aH;
   // Bekleyen ödemeler
   const topAlacak = D.satislar.reduce((s,x) => s + Math.max(0, (x.toplam||0) - (x.odenen!=null?x.odenen:x.toplam||0)), 0);
-  const topBorcum = D.giderler.reduce((s,x) => s + Math.max(0, (x.tutar||0) - (x.odenen!=null?x.odened||x.odenen:x.tutar||0)), 0);
+  const topBorcum = D.giderler.reduce((s,x) => s + Math.max(0, (x.tutar||0) - (x.odenen!=null?x.odenen||x.odenen:x.tutar||0)), 0);
   const alacakEl = document.getElementById('dAlacak');
   if (alacakEl) {
     if (topAlacak > 0 || topBorcum > 0) {
@@ -1774,7 +1774,7 @@ function excelAl(tip) {
                    bakim:'Bakim',enerji:'Enerji',kumes:'Kumes',diger:'Diger'};
     D.giderler.forEach(g => {
       const km = D.kumesler.find(k => k.id === g.kumesId);
-      const gK = Math.max(0, (g.tutar||0) - (g.odenen!=null?g.odened||g.odenen:g.tutar||0));
+      const gK = Math.max(0, (g.tutar||0) - (g.odenen!=null?g.odenen||g.odenen:g.tutar||0));
       csvIcerik += csvSatir([
         g.tarih, turL2[g.tur]||g.tur, g.aciklama||'',
         (g.tutar||0).toFixed(2),
@@ -2139,73 +2139,49 @@ async function startApp(session) {
 }
 
 async function init() {
-  const ltEl = document.getElementById('loadingText');
-
-  // ── 1. URL hata kontrolü ─────────────────────────────────
+  // URL hata kontrolü
   const urlP = new URLSearchParams(window.location.search);
-  const hashP = new URLSearchParams(window.location.hash.replace('#',''));
-  const urlErr = urlP.get('error') || hashP.get('error');
-  if (urlErr) {
-    const desc = urlP.get('error_description') || hashP.get('error_description') || urlErr;
-    ltEl.innerHTML = '<span style="color:#FF8080">Hata: ' + desc + '</span>';
+  if (urlP.get('error')) {
+    document.getElementById('loadingText').innerHTML =
+      '<span style="color:#FF8080">Hata: ' + (urlP.get('error_description') || urlP.get('error')) + '</span>';
     setTimeout(() => window.location.replace('index.html'), 3000);
     return;
   }
 
-  // ── 2. SW cache'i temizle (takılma sorununu önler) ───────
+  // Direkt session al - en hızlı ve güvenilir yol
   try {
-    if ('caches' in window) {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-    }
-  } catch(e) { /* önemsiz */ }
-
-  // ── 3. Session kontrol ───────────────────────────────────
-  // onAuthStateChange ile INITIAL_SESSION event'ini bekle
-  // Bu hem ilk giriş hem tekrar açma için güvenilir
-  let done = false;
-
-  const { data: { subscription } } = sb.auth.onAuthStateChange(async (event, session) => {
-    if (done) return;
-    console.log('[KP v6.5]', event, session ? session.user.email : 'no-session');
-
-    if (event === 'INITIAL_SESSION') {
-      done = true;
-      subscription.unsubscribe();
-      if (session) {
-        await startApp(session);
-        sb.auth.onAuthStateChange(ev => {
-          if (ev === 'SIGNED_OUT') window.location.replace('index.html');
-        });
-      } else {
-        window.location.replace('index.html');
-      }
-    } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && session) {
-      done = true;
-      subscription.unsubscribe();
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
       await startApp(session);
       sb.auth.onAuthStateChange(ev => {
         if (ev === 'SIGNED_OUT') window.location.replace('index.html');
       });
+    } else {
+      // Session yok ama OAuth callback olabilir - 3sn bekle
+      let done = false;
+      const { data: { subscription } } = sb.auth.onAuthStateChange(async (ev, s) => {
+        if (done) return;
+        if (s && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION' || ev === 'TOKEN_REFRESHED')) {
+          done = true;
+          subscription.unsubscribe();
+          await startApp(s);
+          sb.auth.onAuthStateChange(e2 => {
+            if (e2 === 'SIGNED_OUT') window.location.replace('index.html');
+          });
+        } else if (ev === 'INITIAL_SESSION' && !s) {
+          done = true;
+          subscription.unsubscribe();
+          window.location.replace('index.html');
+        }
+      });
+      setTimeout(() => {
+        if (!done) { done = true; window.location.replace('index.html'); }
+      }, 5000);
     }
-  });
-
-  // ── 4. 10 saniye timeout ─────────────────────────────────
-  setTimeout(async () => {
-    if (done) return;
-    done = true;
-    subscription.unsubscribe();
-    try {
-      const { data: { session } } = await sb.auth.getSession();
-      if (session) {
-        await startApp(session);
-      } else {
-        window.location.replace('index.html');
-      }
-    } catch(e) {
-      window.location.replace('index.html');
-    }
-  }, 10000);
+  } catch(e) {
+    console.error('init hatasi:', e);
+    window.location.replace('index.html');
+  }
 }
 
 init();
