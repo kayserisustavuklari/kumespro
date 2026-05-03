@@ -541,6 +541,18 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <div class="sec">
     <div class="sg" id="fStats"></div>
     <div class="divlabel">Gider Kayıtları</div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px">
+      <button class="btn btn-sm btn-p" id="gf-all"      onclick="fGid('all')"      style="flex-shrink:0">Tümü</button>
+      <button class="btn btn-sm btn-s" id="gf-yem"      onclick="fGid('yem')"      style="flex-shrink:0">🌾 Yem</button>
+      <button class="btn btn-sm btn-s" id="gf-ilac"     onclick="fGid('ilac')"     style="flex-shrink:0">💊 İlaç</button>
+      <button class="btn btn-sm btn-s" id="gf-hayvan"   onclick="fGid('hayvan')"   style="flex-shrink:0">🐓 Hayvan</button>
+      <button class="btn btn-sm btn-s" id="gf-ekipman"  onclick="fGid('ekipman')"  style="flex-shrink:0">🔧 Ekipman</button>
+      <button class="btn btn-sm btn-s" id="gf-kulucka"  onclick="fGid('kulucka')"  style="flex-shrink:0">🥚 Kuluçka</button>
+      <button class="btn btn-sm btn-s" id="gf-bakim"    onclick="fGid('bakim')"    style="flex-shrink:0">🧹 Bakım</button>
+      <button class="btn btn-sm btn-s" id="gf-enerji"   onclick="fGid('enerji')"   style="flex-shrink:0">⚡ Enerji</button>
+      <button class="btn btn-sm btn-s" id="gf-kumes"    onclick="fGid('kumes')"    style="flex-shrink:0">🏠 Kümes</button>
+      <button class="btn btn-sm btn-s" id="gf-diger"    onclick="fGid('diger')"    style="flex-shrink:0">📦 Diğer</button>
+    </div>
     <div id="gList"></div>
   </div>
   <button class="fab" onclick="openGM()">+</button>
@@ -621,6 +633,26 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
         ⬆️ &nbsp;Yedek Dosyası Seç
         <input type="file" accept=".json" onchange="yedekYukle(event)" style="display:none">
       </label>
+    </div>
+
+    <!-- YIL SONU / YENİ DÖNEM -->
+    <div class="divlabel" style="margin-top:8px">Yeni Çalışma Dönemi</div>
+    <div class="card mb12">
+      <div class="row mb8">
+        <div>
+          <div class="f13 fw">📅 Yeni Yıla Geç</div>
+          <div class="f11 c2 mt4" id="yilDonemDesc">Satışlar ve giderler sıfırlanır, kümesler korunur</div>
+        </div>
+        <span style="font-size:24px">🎊</span>
+      </div>
+      <div class="al al-w" style="margin-bottom:10px;font-size:11px">
+        ⚠️ Bu işlem yıl sonu yapıldığında yeni yıla geçişte kullanılır.<br>
+        Önce <strong>JSON yedek</strong> alın, sonra devam edin!
+      </div>
+      <button class="btn btn-p" onclick="openYilSonu()"
+        style="background:linear-gradient(135deg,var(--ora),var(--ora-d))">
+        🎊 Yeni Döneme Geç
+      </button>
     </div>
 
     <!-- Veri özeti -->
@@ -926,6 +958,53 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <div class="mf">
     <button class="btn btn-s" style="flex:1" onclick="closeM('mGid')">İptal</button>
     <button class="btn btn-p" style="flex:2" onclick="saveGid()">Kaydet</button>
+  </div>
+</div></div>
+
+<!-- YIL SONU MODALI -->
+<div class="mo" id="mYilSonu"><div class="modal">
+  <div class="mt2">🎊 Yeni Döneme Geç</div>
+  <div class="al al-w" style="font-size:12px;margin-bottom:12px">
+    ⚠️ Bu işlem geri alınamaz! Devam etmeden önce mutlaka <strong>JSON Yedek</strong> alın.
+  </div>
+
+  <div class="fg">
+    <label class="fl">Korunacaklar (otomatik)</label>
+    <div class="al al-s" style="font-size:12px">
+      ✅ Kümesler ve hayvan sayıları<br>
+      ✅ Civciv üniteleri<br>
+      ✅ Aktif kuluçkalar
+    </div>
+  </div>
+
+  <div class="fg">
+    <label class="fl">Bu kayıtlardan bekleyenleri yeni döneme aktar</label>
+    <div id="yilSonuOzet" class="f12 c2" style="background:var(--gray-xx);border-radius:8px;padding:10px;margin-bottom:10px;line-height:1.7"></div>
+
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;background:var(--gr-l);border-radius:8px;margin-bottom:6px">
+      <input type="checkbox" id="ysAktarSatis" checked style="width:18px;height:18px;cursor:pointer">
+      <span class="f12">📥 <strong>Ödenmemiş satışları</strong> (alacaklar) yeni döneme aktar</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;background:var(--ora-l);border-radius:8px;margin-bottom:6px">
+      <input type="checkbox" id="ysAktarGider" checked style="width:18px;height:18px;cursor:pointer">
+      <span class="f12">📤 <strong>Ödenmemiş giderleri</strong> (borçlar) yeni döneme aktar</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px;background:var(--gr-l);border-radius:8px">
+      <input type="checkbox" id="ysSilTumKulucka" style="width:18px;height:18px;cursor:pointer">
+      <span class="f12">🥚 Tamamlanmış kuluçkaları sil (aktifler korunur)</span>
+    </label>
+  </div>
+
+  <div class="fg">
+    <label class="fl">Yedek Bilgisi</label>
+    <div class="al al-w" style="font-size:11px">
+      Önce <strong>"İptal"</strong> diyip sayfayı geçici kapatabilir, JSON Yedek alıp tekrar gelebilirsiniz.
+    </div>
+  </div>
+
+  <div class="mf">
+    <button class="btn btn-s" style="flex:1" onclick="closeM('mYilSonu')">İptal</button>
+    <button class="btn btn-p" style="flex:2;background:linear-gradient(135deg,var(--ora),var(--ora-d))" onclick="yeniDonemeGec()">🎊 Onayla & Devam Et</button>
   </div>
 </div></div>
 
@@ -1900,6 +1979,9 @@ async function saveSat(){
 }
 
 // ─── FİNANS ──────────────────────────────────────────────────
+let curGFilter = 'all';
+function fGid(f){ curGFilter = f; rFinans(); }
+
 function rFinans(){
   const tG=D.satislar.reduce((s,x)=>s+(x.toplam||0),0);
   const tGid=D.giderler.reduce((s,x)=>s+(x.tutar||0),0);
@@ -1909,10 +1991,25 @@ function rFinans(){
     <div class="sb" data-icon="📉"><div class="sl">Toplam Gider</div><div class="sv cr" style="font-size:20px">${fm(tGid)}</div></div>
     <div class="sb ${net>=0?'sb-pri':'sb-ora'}" data-icon="💰" style="grid-column:span 2">
       <div class="sl">Net Kâr / Zarar</div><div class="dg" style="font-size:28px;color:#fff">${fm(net)}</div></div>`;
+
+  // Filtre buton stilleri
+  ['all','yem','ilac','hayvan','ekipman','kulucka','bakim','enerji','kumes','diger'].forEach(f=>{
+    const b=document.getElementById('gf-'+f);
+    if(b){ b.className = 'btn btn-sm ' + (curGFilter===f?'btn-p':'btn-s'); b.style.flexShrink='0'; }
+  });
+
   const tL={yem:'🌾 Yem',ilac:'💊 İlaç',hayvan:'🐓 Canlı Hayvan',ekipman:'🔧 Ekipman',kulucka:'🥚 Kuluçka',bakim:'🧹 Bakım',enerji:'⚡ Enerji',kumes:'🏠 Kümes',diger:'📦 Diğer'};
-  const byT={};D.giderler.forEach(g=>{if(!byT[g.tur])byT[g.tur]=[];byT[g.tur].push(g)});
+
+  // Filtreyi uygula
+  const filtered = curGFilter==='all' ? D.giderler : D.giderler.filter(g=>g.tur===curGFilter);
+
+  const byT={};filtered.forEach(g=>{if(!byT[g.tur])byT[g.tur]=[];byT[g.tur].push(g)});
   let h='';
-  if(!D.giderler.length)h='<div class="empty"><div class="et">Henüz gider kaydı yok</div></div>';
+  if(!filtered.length){
+    h = curGFilter==='all'
+      ? '<div class="empty"><div class="et">Henüz gider kaydı yok</div></div>'
+      : '<div class="empty"><div class="et">Bu kategoride gider yok</div></div>';
+  }
   else Object.keys(byT).forEach(t=>{
     const tt=byT[t].reduce((s,g)=>s+g.tutar,0);
     h+=`<div class="divlabel">${tL[t]||t} <span class="cr">— ${fm(tt)}</span></div>`;
@@ -2291,6 +2388,152 @@ async function checkForUpdate() {
       window.location.reload();
     });
   } catch(e) { /* önemsiz */ }
+}
+
+// ─── YIL SONU / YENİ DÖNEM ────────────────────────────────────
+function openYilSonu() {
+  // Bekleyen ödemeleri özetle
+  const odenmemisSatis = D.satislar.filter(s => {
+    const ode = s.odenen != null ? s.odenen : s.toplam;
+    return ode < (s.toplam || 0);
+  });
+  const odenmemisGider = D.giderler.filter(g => {
+    const ode = g.odenen != null ? g.odenen : g.tutar;
+    return ode < (g.tutar || 0);
+  });
+
+  const topAlacak = odenmemisSatis.reduce((s,x)=>s+Math.max(0,(x.toplam||0)-(x.odenen!=null?x.odenen:x.toplam||0)),0);
+  const topBorc   = odenmemisGider.reduce((s,x)=>s+Math.max(0,(x.tutar||0)-(x.odenen!=null?x.odenen:x.tutar||0)),0);
+
+  const ozetEl = document.getElementById('yilSonuOzet');
+  if (ozetEl) {
+    ozetEl.innerHTML = `
+      <div>📊 Mevcut: <strong>${D.satislar.length}</strong> satış · <strong>${D.giderler.length}</strong> gider</div>
+      <div style="margin-top:6px">📥 Ödenmemiş satış: <strong>${odenmemisSatis.length}</strong> kayıt · <span class="cg fw">${fm(topAlacak)} alacak</span></div>
+      <div>📤 Ödenmemiş gider: <strong>${odenmemisGider.length}</strong> kayıt · <span class="cr fw">${fm(topBorc)} borç</span></div>
+    `;
+  }
+
+  // Hiç gelir/gider yoksa anlamsız uyarı
+  if (D.satislar.length === 0 && D.giderler.length === 0) {
+    if (!confirm('Şu an hiç satış/gider kaydı yok. Yine de devam edilsin mi?')) return;
+  }
+
+  openM('mYilSonu');
+}
+
+async function yeniDonemeGec() {
+  // Son uyarı
+  const onay = confirm(
+    '⚠️ SON ONAY\n\n' +
+    'Tüm satış ve gider kayıtları silinecek!\n' +
+    'Sadece işaretli olanlar (ödenmemiş alacak/borç) yeni dönemde tutulacak.\n\n' +
+    'Yedek aldığınızdan emin misiniz?\n\n' +
+    'DEVAM ETMEK için "Tamam"a basın.'
+  );
+  if (!onay) return;
+
+  const aktarSatis     = document.getElementById('ysAktarSatis').checked;
+  const aktarGider     = document.getElementById('ysAktarGider').checked;
+  const silTumKulucka  = document.getElementById('ysSilTumKulucka').checked;
+
+  const overlay = document.getElementById('loadingOverlay');
+  const ltEl    = document.getElementById('loadingText');
+  if (overlay) overlay.classList.remove('hidden');
+  if (ltEl) ltEl.textContent = 'Yeni dönem hazırlanıyor...';
+
+  try {
+    closeM('mYilSonu');
+
+    // 1. Aktarılacak ödenmemiş kayıtları belirle
+    const bugun = td();
+    const yeniSatislar = aktarSatis ? D.satislar.filter(s => {
+      const ode = s.odenen != null ? s.odenen : s.toplam;
+      return ode < (s.toplam || 0);
+    }).map(s => {
+      const kalan = Math.max(0, (s.toplam||0) - (s.odenen!=null?s.odenen:s.toplam||0));
+      return {
+        musteri: (s.musteri||'') + ' (önceki dönem)',
+        tarih:   bugun,
+        urunler: [{ tip:'diger', ad:'Önceki dönem alacağı', adet:1, fiyat:kalan }],
+        toplam:  kalan,
+        odenen:  0,
+        kalan:   kalan,
+        not:     'Önceki dönemden devreden alacak. Orjinal tarih: ' + s.tarih
+      };
+    }) : [];
+
+    const yeniGiderler = aktarGider ? D.giderler.filter(g => {
+      const ode = g.odenen != null ? g.odenen : g.tutar;
+      return ode < (g.tutar || 0);
+    }).map(g => {
+      const kalan = Math.max(0, (g.tutar||0) - (g.odenen!=null?g.odenen:g.tutar||0));
+      return {
+        tur:      g.tur,
+        aciklama: (g.aciklama||'') + ' (önceki dönem borç)',
+        tutar:    kalan,
+        odenen:   0,
+        kalan:    kalan,
+        tarih:    bugun,
+        kumesId:  g.kumesId
+      };
+    }) : [];
+
+    // 2. Tüm satış ve giderleri sil
+    if (ltEl) ltEl.textContent = 'Eski kayıtlar siliniyor...';
+    const uid_ = currentUser.id;
+    await sb.from('satislar').delete().eq('user_id', uid_);
+    await sb.from('giderler').delete().eq('user_id', uid_);
+
+    // 3. Tamamlanmış kuluçkaları sil (istenirse)
+    let silKuluckaSayi = 0;
+    if (silTumKulucka) {
+      if (ltEl) ltEl.textContent = 'Tamamlanmış kuluçkalar siliniyor...';
+      const tamamlanmislar = D.kuluckalar.filter(k => k.durum === 'tamamlandi');
+      for (const k of tamamlanmislar) {
+        await dbKuluckaSil(k.id);
+        silKuluckaSayi++;
+      }
+    }
+
+    // 4. Yeni satışları ekle
+    if (yeniSatislar.length) {
+      if (ltEl) ltEl.textContent = 'Devreden alacaklar aktarılıyor...';
+      for (const s of yeniSatislar) {
+        await dbSatisEkle({ id: uid(), ...s });
+      }
+    }
+
+    // 5. Yeni giderleri ekle
+    if (yeniGiderler.length) {
+      if (ltEl) ltEl.textContent = 'Devreden borçlar aktarılıyor...';
+      for (const g of yeniGiderler) {
+        await dbGiderEkle({ id: uid(), ...g });
+      }
+    }
+
+    // 6. Belleği yenile
+    if (ltEl) ltEl.textContent = 'Veriler yenileniyor...';
+    await dbYukle();
+
+    if (overlay) overlay.classList.add('hidden');
+
+    const mesaj = 'Yeni dönem hazır! 🎊\n\n' +
+      '✅ Kümesler ve hayvanlar korundu\n' +
+      (silKuluckaSayi > 0 ? '🗑 ' + silKuluckaSayi + ' tamamlanmış kuluçka silindi\n' : '') +
+      (yeniSatislar.length > 0 ? '📥 ' + yeniSatislar.length + ' alacak aktarıldı\n' : '') +
+      (yeniGiderler.length > 0 ? '📤 ' + yeniGiderler.length + ' borç aktarıldı\n' : '') +
+      '\nİyi çalışmalar!';
+    alert(mesaj);
+
+    goTab('anasayfa');
+    toast('🎊 Yeni dönem başlatıldı!', 'ok', 4000);
+
+  } catch (err) {
+    console.error('[Yıl Sonu] HATA:', err);
+    if (overlay) overlay.classList.add('hidden');
+    alert('Hata oluştu: ' + err.message + '\n\nKonsoldan detayları görebilirsiniz.');
+  }
 }
 
 // ─── YEDEK AL ─────────────────────────────────────────────────
