@@ -1666,6 +1666,15 @@ function openSM(){
 function editSat(id){
   const s=D.satislar.find(x=>x.id===id);if(!s)return;
   sRows=JSON.parse(JSON.stringify(s.urunler));
+  // Eski kayıtları yeni formata uyarla (erkekAdet/disiAdet yoksa)
+  sRows.forEach(r=>{
+    if(r.tip==='hayvan' && (r.erkekAdet===undefined || r.disiAdet===undefined)){
+      // Eski format: tek "adet" alanı vardı, otomatik yarı yarıya bölünmüştü
+      const e = Math.floor((r.adet||0)/2);
+      r.erkekAdet = e;
+      r.disiAdet  = (r.adet||0) - e;
+    }
+  });
   document.getElementById('sEId').value=id;document.getElementById('mSatTitle').textContent='Satış Düzenle ✏️';
   document.getElementById('sMus').value=s.musteri||'';document.getElementById('sTar').value=s.tarih;
   document.getElementById('sNot').value=s.not||'';
@@ -1681,26 +1690,90 @@ async function delSat(id){
 function rSRows(){
   const kO=D.kumesler.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
   const uO=D.civcivUniteleri.map(u=>`<option value="${u.id}">${u.ad}(${u.adet})</option>`).join('');
-  document.getElementById('sUrunler').innerHTML=sRows.map((r,i)=>`
-    <div class="sr"><div style="display:flex;gap:6px;flex-wrap:wrap">
+  document.getElementById('sUrunler').innerHTML=sRows.map((r,i)=>{
+    // Hayvan satışında seçili kümesin erkek/dişi sayısını bul
+    let erkekStok = 0, disiStok = 0, kumesAd = '';
+    if (r.tip==='hayvan' && r.kumesId) {
+      const k = D.kumesler.find(x=>x.id===r.kumesId);
+      if (k) {
+        kumesAd = k.ad;
+        (k.irklar||[]).forEach(ir => { erkekStok += (ir.erkek||0); disiStok += (ir.disi||0); });
+      }
+    }
+    const stokToplam = erkekStok + disiStok;
+
+    // Tip + kaynak seçici (1. satır)
+    const tipSelect = `
       <select class="fs" style="flex:1;min-width:110px" onchange="onSTC(${i},this.value)">
         <option value="hayvan" ${r.tip==='hayvan'?'selected':''}>🐓 Hayvan</option>
         <option value="civciv" ${r.tip==='civciv'?'selected':''}>🐣 Civciv</option>
         <option value="yumurta" ${r.tip==='yumurta'?'selected':''}>🥚 Yumurta</option>
         <option value="diger" ${r.tip==='diger'?'selected':''}>📦 Diğer</option>
-      </select>
-      ${r.tip==='hayvan'?`<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].kumesId=this.value">${kO}</select>`:r.tip==='civciv'?`<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].uniteId=this.value">${uO}</select>`:`<input class="fi" placeholder="Ürün adı" value="${r.ad||''}" style="flex:1" oninput="sRows[${i}].ad=this.value">`}
-      <div style="display:flex;gap:6px;width:100%">
-        <input class="fi" type="number" placeholder="Adet" value="${r.adet||''}" style="flex:1" min="1" oninput="sRows[${i}].adet=parseInt(this.value)||0;calcSTop()">
-        <input class="fi" type="number" placeholder="₺ Fiyat" value="${r.fiyat||''}" style="flex:1" min="0" step="0.01" oninput="sRows[${i}].fiyat=parseFloat(this.value)||0;calcSTop()">
-        <button class="btn btn-d btn-sm" onclick="remSR(${i})" style="padding:8px 10px;flex-shrink:0">✕</button>
-      </div>
-      ${(r.adet&&r.fiyat)?`<div class="f12 c2" style="width:100%;text-align:right">${r.adet}×${fm(r.fiyat)} = <span class="cg fw">${fm(r.adet*r.fiyat)}</span></div>`:''}
-    </div></div>`).join('');
+      </select>`;
+    const kaynakSelect = r.tip==='hayvan'
+      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].kumesId=this.value;sRows[${i}].erkekAdet=0;sRows[${i}].disiAdet=0;rSRows()">${D.kumesler.map(k=>`<option value="${k.id}" ${k.id===r.kumesId?'selected':''}>${k.ad}</option>`).join('')}</select>`
+      : r.tip==='civciv'
+      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].uniteId=this.value">${D.civcivUniteleri.map(u=>`<option value="${u.id}" ${u.id===r.uniteId?'selected':''}>${u.ad}(${u.adet})</option>`).join('')}</select>`
+      : `<input class="fi" placeholder="Ürün adı" value="${r.ad||''}" style="flex:1" oninput="sRows[${i}].ad=this.value">`;
+
+    // Hayvan satışı: erkek/dişi ayrı inputlar
+    let adetBlok = '';
+    if (r.tip === 'hayvan') {
+      const hicYok = stokToplam === 0;
+      const sadeceErkek = erkekStok > 0 && disiStok === 0;
+      const sadeceDisi  = disiStok > 0 && erkekStok === 0;
+
+      // Stok bilgisi rozeti
+      const stokBilgi = kumesAd ? `<div class="f11 c2" style="width:100%;margin-top:4px">
+        Stok: <span class="b bb">♂ ${erkekStok}</span> <span class="b bg" style="margin-left:4px">♀ ${disiStok}</span>
+        ${hicYok?'<span style="color:var(--red);margin-left:6px">⚠️ Stok yok!</span>':''}
+      </div>` : '';
+
+      adetBlok = `
+        <div style="display:flex;gap:6px;width:100%;flex-wrap:wrap">
+          <div style="flex:1;min-width:80px">
+            <input class="fi" type="number" placeholder="♂ Erkek" value="${r.erkekAdet||''}"
+              min="0" max="${erkekStok}" ${sadeceDisi?'disabled':''}
+              oninput="sRows[${i}].erkekAdet=Math.min(${erkekStok},parseInt(this.value)||0);sRows[${i}].adet=(sRows[${i}].erkekAdet||0)+(sRows[${i}].disiAdet||0);calcSTop()">
+          </div>
+          <div style="flex:1;min-width:80px">
+            <input class="fi" type="number" placeholder="♀ Dişi" value="${r.disiAdet||''}"
+              min="0" max="${disiStok}" ${sadeceErkek?'disabled':''}
+              oninput="sRows[${i}].disiAdet=Math.min(${disiStok},parseInt(this.value)||0);sRows[${i}].adet=(sRows[${i}].erkekAdet||0)+(sRows[${i}].disiAdet||0);calcSTop()">
+          </div>
+          <input class="fi" type="number" placeholder="₺ Birim Fiyat" value="${r.fiyat||''}"
+            style="flex:1.2;min-width:90px" min="0" step="0.01"
+            oninput="sRows[${i}].fiyat=parseFloat(this.value)||0;calcSTop()">
+          <button class="btn btn-d btn-sm" onclick="remSR(${i})" style="padding:8px 10px;flex-shrink:0">✕</button>
+        </div>
+        ${stokBilgi}
+      `;
+    } else {
+      // Civciv / yumurta / diğer için tek adet
+      adetBlok = `
+        <div style="display:flex;gap:6px;width:100%">
+          <input class="fi" type="number" placeholder="Adet" value="${r.adet||''}" style="flex:1" min="1" oninput="sRows[${i}].adet=parseInt(this.value)||0;calcSTop()">
+          <input class="fi" type="number" placeholder="₺ Fiyat" value="${r.fiyat||''}" style="flex:1" min="0" step="0.01" oninput="sRows[${i}].fiyat=parseFloat(this.value)||0;calcSTop()">
+          <button class="btn btn-d btn-sm" onclick="remSR(${i})" style="padding:8px 10px;flex-shrink:0">✕</button>
+        </div>
+      `;
+    }
+
+    const ozet = (r.adet && r.fiyat)
+      ? `<div class="f12 c2" style="width:100%;text-align:right">${r.adet}×${fm(r.fiyat)} = <span class="cg fw">${fm(r.adet*r.fiyat)}</span></div>`
+      : '';
+
+    return `<div class="sr"><div style="display:flex;gap:6px;flex-wrap:wrap">
+      ${tipSelect}
+      ${kaynakSelect}
+      ${adetBlok}
+      ${ozet}
+    </div></div>`;
+  }).join('');
   calcSTop();
 }
-function onSTC(i,v){sRows[i].tip=v;sRows[i].kumesId=D.kumesler[0]?.id||'';sRows[i].uniteId=D.civcivUniteleri[0]?.id||'';rSRows()}
-function addSR(){sRows.push({tip:'hayvan',kumesId:D.kumesler[0]?.id||'',uniteId:D.civcivUniteleri[0]?.id||'',adet:0,fiyat:0,ad:''});rSRows()}
+function onSTC(i,v){sRows[i].tip=v;sRows[i].kumesId=D.kumesler[0]?.id||'';sRows[i].uniteId=D.civcivUniteleri[0]?.id||'';sRows[i].erkekAdet=0;sRows[i].disiAdet=0;sRows[i].adet=0;rSRows()}
+function addSR(){sRows.push({tip:'hayvan',kumesId:D.kumesler[0]?.id||'',uniteId:D.civcivUniteleri[0]?.id||'',adet:0,erkekAdet:0,disiAdet:0,fiyat:0,ad:''});rSRows()}
 function remSR(i){sRows.splice(i,1);rSRows()}
 
 // ─── ÖDEME HESAPLAMA ─────────────────────────────────────────
@@ -1722,15 +1795,56 @@ function calcGKalan() {
 function calcSTop(){const t=sRows.reduce((s,r)=>s+(r.adet||0)*(r.fiyat||0),0);const el=document.getElementById('sTop');if(el)el.textContent=fm(t)}
 async function saveSat(){
   if(!sRows.length){alert('En az bir ürün ekleyin!');return}
-  for(const r of sRows)if(!r.adet||!r.fiyat){alert('Tüm ürünler için adet ve fiyat girin!');return}
+  for(const r of sRows){
+    if(r.tip==='hayvan'){
+      const tot=(r.erkekAdet||0)+(r.disiAdet||0);
+      if(!tot){alert('Hayvan satışı için erkek ve/veya dişi adet girin!');return}
+      if(!r.fiyat){alert('Tüm ürünler için fiyat girin!');return}
+      r.adet = tot; // toplam adet senkronize
+      // Stok kontrolü
+      const k = D.kumesler.find(x=>x.id===r.kumesId);
+      if(!k){alert('Kümes bulunamadı!');return}
+      let toplamE=0, toplamD=0;
+      (k.irklar||[]).forEach(ir=>{toplamE+=(ir.erkek||0);toplamD+=(ir.disi||0)});
+      if((r.erkekAdet||0) > toplamE){alert('"'+k.ad+'" kümesinde yeterli erkek yok! (Mevcut: '+toplamE+')');return}
+      if((r.disiAdet||0)  > toplamD){alert('"'+k.ad+'" kümesinde yeterli dişi yok! (Mevcut: '+toplamD+')');return}
+    } else {
+      if(!r.adet||!r.fiyat){alert('Tüm ürünler için adet ve fiyat girin!');return}
+    }
+  }
   const mus=document.getElementById('sMus').value.trim(),tarih=document.getElementById('sTar').value;
   const toplam=sRows.reduce((s,r)=>s+(r.adet||0)*(r.fiyat||0),0);
   const sOdEl2 = document.getElementById('sOdenen');
   const odenen_s = sOdEl2 && sOdEl2.value !== '' ? parseFloat(sOdEl2.value) : toplam;
   // Stok güncelle
   sRows.forEach(r=>{
-    if(r.tip==='hayvan'&&r.kumesId){const k=D.kumesler.find(x=>x.id===r.kumesId);if(k&&k.irklar){let kal=r.adet;for(const irk of k.irklar){const t=(irk.erkek||0)+(irk.disi||0);const al=Math.min(t,kal);if(al>0){const e=Math.min(irk.erkek||0,Math.ceil(al/2));irk.erkek=Math.max(0,(irk.erkek||0)-e);irk.disi=Math.max(0,(irk.disi||0)-(al-e));kal-=al}if(!kal)break}k.hareketler=k.hareketler||[];k.hareketler.push({islem:'cikar',erkek:Math.floor(r.adet/2),disi:r.adet-Math.floor(r.adet/2),not:'Satış: '+(mus||'Anonim'),tarih,irkAd:'Otomatik'})}}
-    else if(r.tip==='civciv'&&r.uniteId){const u=D.civcivUniteleri.find(x=>x.id===r.uniteId);if(u){u.adet=Math.max(0,(u.adet||0)-r.adet);u.hareketler=u.hareketler||[];u.hareketler.push({islem:'cikar',adet:r.adet,not:'Satış: '+(mus||'Anonim'),tarih})}}
+    if(r.tip==='hayvan'&&r.kumesId){
+      const k=D.kumesler.find(x=>x.id===r.kumesId);
+      if(k&&k.irklar){
+        // Erkekleri sırayla düş
+        let kalE = r.erkekAdet||0;
+        let kalD = r.disiAdet ||0;
+        for(const irk of k.irklar){
+          if(kalE>0){
+            const al=Math.min(irk.erkek||0,kalE);
+            irk.erkek=Math.max(0,(irk.erkek||0)-al);
+            kalE-=al;
+          }
+          if(kalD>0){
+            const al=Math.min(irk.disi||0,kalD);
+            irk.disi=Math.max(0,(irk.disi||0)-al);
+            kalD-=al;
+          }
+          if(!kalE && !kalD) break;
+        }
+        k.hareketler=k.hareketler||[];
+        k.hareketler.push({islem:'cikar',erkek:r.erkekAdet||0,disi:r.disiAdet||0,not:'Satış: '+(mus||'Anonim'),tarih,irkAd:'Genel'});
+      }
+    }
+    else if(r.tip==='civciv'&&r.uniteId){
+      const u=D.civcivUniteleri.find(x=>x.id===r.uniteId);
+      if(u){u.adet=Math.max(0,(u.adet||0)-r.adet);u.hareketler=u.hareketler||[];u.hareketler.push({islem:'cikar',adet:r.adet,not:'Satış: '+(mus||'Anonim'),tarih})}
+    }
   });
   // Stok kaydet
   await Promise.all([
