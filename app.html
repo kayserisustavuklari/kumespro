@@ -2337,6 +2337,7 @@ function yedekYukle(event) {
 // ═══════════════════════════════════════════════════════════
 
 const APP_VERSION = '6.6';
+console.log('[KP] Script yüklendi, v' + APP_VERSION);
 
 let pwaPrompt    = null;
 let isIOS        = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
@@ -2387,23 +2388,23 @@ function updateInstallUI() {
   if (instCard) instCard.style.display = 'none';
 
   if (pwaPrompt) {
-    if (desc)     desc.textContent    = 'Android: Tek tıkla ana ekrana ekleyin';
-    if (btn)      btn.style.display   = 'flex';
+    if (desc)     desc.textContent     = 'Android: Tek tıkla ana ekrana ekleyin';
+    if (btn)      btn.style.display    = 'flex';
     if (manual)   manual.style.display = 'none';
   } else if (isIOS) {
-    if (desc)     desc.textContent    = 'iPhone/iPad için kurulum talimatları:';
-    if (btn)      btn.style.display   = 'none';
+    if (desc)     desc.textContent     = 'iPhone/iPad için kurulum talimatları:';
+    if (btn)      btn.style.display    = 'none';
     if (manual)   manual.style.display = 'block';
-    if (manualTx) manualTx.innerHTML  =
+    if (manualTx) manualTx.innerHTML   =
       '1. Alttaki <strong>Paylaş</strong> butonuna dokun (kare + ok)<br>' +
       '2. Aşağı kaydırarak <strong>"Ana Ekrana Ekle"</strong> seçeneğini bul<br>' +
       '3. Sağ üstteki <strong>"Ekle"</strong> butonuna dokun<br>' +
       '4. KümesPro ana ekranında görünecek 🎉';
   } else {
-    if (desc)     desc.textContent    = 'Tarayıcı menüsünden veya adres çubuğu ikonu ile yükleyin';
-    if (btn)      btn.style.display   = 'none';
+    if (desc)     desc.textContent     = 'Tarayıcı menüsünden veya adres çubuğu ikonu ile yükleyin';
+    if (btn)      btn.style.display    = 'none';
     if (manual)   manual.style.display = 'block';
-    if (manualTx) manualTx.innerHTML  =
+    if (manualTx) manualTx.innerHTML   =
       'Chrome: Adres çubuğu sağındaki <strong>⊕ İndir</strong> ikonuna tıklayın<br>' +
       'Edge: Adres çubuğu sağındaki <strong>📲</strong> ikonuna tıklayın';
   }
@@ -2418,8 +2419,7 @@ async function pwaCur() {
   }
 }
 
-// Eski pwaBanner butonları için alias
-function pwaBannerYukle() { closeBanner(); if (pwaPrompt) { pwaPrompt.prompt(); pwaPrompt = null; } else if (isIOS) { goTab('info'); } }
+function pwaBannerYukle() { closeBanner(); if (pwaPrompt) { pwaPrompt.prompt(); pwaPrompt = null; } else if (isIOS) goTab('info'); }
 function pwaBannerKapat() { closeBanner(); }
 
 function showInstallBanner() {
@@ -2513,14 +2513,18 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // ═══════════════════════════════════════════════════════════
-//  UYGULAMA BAŞLATMA
+//  UYGULAMA BAŞLATMA — DIAGNOSTIC LOGLU
 // ═══════════════════════════════════════════════════════════
 
 let _baslatildi = false;
 
 async function appBaslat(user) {
-  if (_baslatildi) return;   // çift tetiklenmeyi önle
+  if (_baslatildi) {
+    console.log('[KP] appBaslat zaten çalıştı, atlanıyor');
+    return;
+  }
   _baslatildi = true;
+  console.log('[KP] appBaslat başladı, kullanıcı:', user.email);
 
   currentUser = user;
 
@@ -2534,18 +2538,32 @@ async function appBaslat(user) {
   if (ltEl) ltEl.textContent = 'Veriler yükleniyor...';
 
   try {
+    console.log('[KP] dbYukle() çağrılıyor...');
     await dbYukle();
+    console.log('[KP] dbYukle() tamamlandı. Veriler:',
+      'kümes=' + D.kumesler.length,
+      'kuluçka=' + D.kuluckalar.length,
+      'civciv=' + D.civcivUniteleri.length,
+      'satış=' + D.satislar.length,
+      'gider=' + D.giderler.length);
   } catch (err) {
     console.error('[KP] DB hatası:', err);
-    if (ltEl) ltEl.textContent = '❌ ' + err.message;
+    if (ltEl) ltEl.textContent = '❌ ' + (err.message || 'Veri yükleme hatası');
     setTimeout(() => { if (overlay) overlay.classList.add('hidden'); }, 3000);
     return;
   }
 
+  console.log('[KP] Loading overlay kapatılıyor...');
   if (overlay) overlay.classList.add('hidden');
 
-  updateInstallUI();
-  goTab('anasayfa');
+  try {
+    updateInstallUI();
+    goTab('anasayfa');
+    console.log('[KP] UI hazır.');
+  } catch (e) {
+    console.error('[KP] UI render hatası:', e);
+  }
+
   checkForUpdate();
 
   if (!localStorage.getItem('kp_welcomed')) {
@@ -2555,23 +2573,49 @@ async function appBaslat(user) {
   }
 }
 
-// Supabase oturum kontrolü — getSession ile başlat, onAuthStateChange yedek
-sb.auth.getSession().then(({ data: { session }, error }) => {
-  if (error) console.warn('[KP] getSession hatası:', error.message);
-  if (session && session.user) {
-    appBaslat(session.user);
-  } else {
-    // Oturum yok → giriş sayfasına
+console.log('[KP] Oturum kontrol ediliyor...');
+
+// Supabase oturum kontrolü — getSession ana tetikleyici
+sb.auth.getSession()
+  .then(({ data, error }) => {
+    if (error) {
+      console.error('[KP] getSession hatası:', error);
+    }
+    const session = data && data.session;
+    console.log('[KP] getSession sonucu:', session ? 'OTURUM VAR (' + session.user.email + ')' : 'OTURUM YOK');
+    if (session && session.user) {
+      appBaslat(session.user);
+    } else {
+      console.log('[KP] Oturum yok, index.html\'e yönlendiriliyor...');
+      window.location.href = 'index.html';
+    }
+  })
+  .catch(err => {
+    console.error('[KP] getSession PROMISE HATASI:', err);
+    const ltEl = document.getElementById('loadingText');
+    if (ltEl) ltEl.textContent = '❌ Bağlantı hatası: ' + err.message;
+  });
+
+// onAuthStateChange: çıkış olaylarını yakala
+sb.auth.onAuthStateChange((event, session) => {
+  console.log('[KP] Auth event:', event, session ? '(oturum var)' : '(oturum yok)');
+  if (event === 'SIGNED_OUT') {
     window.location.href = 'index.html';
+  } else if (event === 'SIGNED_IN' && session && session.user && !_baslatildi) {
+    appBaslat(session.user);
   }
 });
 
-// onAuthStateChange: sadece token yenileme / çıkış olaylarını yakala
-sb.auth.onAuthStateChange((event, session) => {
-  if (event === 'SIGNED_OUT') {
-    window.location.href = 'index.html';
-  } else if ((event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') && session && session.user) {
-    appBaslat(session.user);
+// EMERGENCY: 15 saniye sonra hala yükleniyorsa zorla kapat
+setTimeout(() => {
+  if (!_baslatildi) {
+    console.error('[KP] 15sn geçti, hala başlatılmadı! Olası neden: Supabase erişilmiyor veya CSP hatası.');
+    const ltEl = document.getElementById('loadingText');
+    if (ltEl) ltEl.innerHTML = '⚠️ Bağlantı zaman aşımı.<br><button onclick="window.location.href=\'index.html\'" style="margin-top:12px;padding:8px 16px;border:none;border-radius:8px;background:#1A5F8A;color:#fff;cursor:pointer">Giriş Sayfasına Dön</button>';
   }
-});
+}, 15000);
+
+</script>
+</body>
+</html>
 
