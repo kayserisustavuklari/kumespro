@@ -1,22 +1,19 @@
-// KümesPro Service Worker v6.5
-// Sadece PWA kurulum için - cache KULLANMIYOR
-// Her açılışta taze veri çekilir
+// KümesPro Service Worker v6.6
+const CACHE = 'kumespro-v66';
 
-const CACHE_NAME = 'kumespro-v65';
-
-self.addEventListener('install', () => {
-  // Hemen aktif ol
-  self.skipWaiting();
-});
+self.addEventListener('install', () => self.skipWaiting());
 
 self.addEventListener('activate', e => {
-  // Tüm eski cache'leri sil
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Fetch event YOK - tüm istekler ağdan gider, cache kullanılmaz
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+// Fetch: sadece HTML dosyaları için network-first (cache YOK)
 // Bu sayede her açılışta taze session kontrolü yapılır

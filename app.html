@@ -348,6 +348,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
 /* ── TOAST ── */
 .toast{position:fixed;bottom:90px;left:16px;right:16px;background:var(--gr0);color:#fff;padding:11px 16px;border-radius:12px;font-size:13px;font-weight:500;z-index:5000;display:none;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .toast.show{display:block}.toast.ok{background:var(--green)}.toast.err{background:var(--red)}
+@keyframes slideUp2{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body>
@@ -362,6 +363,104 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
+
+
+<!-- PWA ANA EKRAN BANNER -->
+<div id="pwaBanner" style="display:none;position:fixed;bottom:86px;left:12px;right:12px;z-index:500;
+  background:linear-gradient(135deg,#1A5F8A,#2980B9);color:#fff;
+  border-radius:16px;padding:14px 16px;box-shadow:0 4px 20px rgba(26,95,138,.45);
+  animation:slideUp2 .4s ease">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div id="pwaBannerIcon" style="width:44px;height:44px;border-radius:10px;overflow:hidden;flex-shrink:0"></div>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:14px">KümesPro'yu Yükle</div>
+      <div id="pwaBannerMsg" style="font-size:11px;opacity:.8;margin-top:2px">Ana ekrana ekleyerek uygulama gibi kullanın</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+      <button onclick="pwaBannerYukle()" style="background:#fff;color:#1A5F8A;border:none;border-radius:8px;
+        padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">
+        Ekle ↓
+      </button>
+      <button onclick="pwaBannerKapat()" style="background:rgba(255,255,255,.15);color:#fff;border:none;
+        border-radius:6px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit">
+        Kapat
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- PWA INSTALL BANNER -->
+<div id="installBanner" style="display:none;position:fixed;bottom:86px;left:12px;right:12px;z-index:500;
+  background:linear-gradient(135deg,#1A5F8A,#2980B9);color:#fff;
+  border-radius:16px;padding:14px 16px;box-shadow:0 4px 20px rgba(26,95,138,.4);
+  animation:slideUp2 .4s ease">
+  <div style="display:flex;align-items:center;gap:12px">
+    <img id="installBannerIcon" src="" style="width:44px;height:44px;border-radius:10px" alt="">
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700">KümesPro'yu Kur</div>
+      <div style="font-size:11px;opacity:.8;margin-top:2px" id="installBannerText">Ana ekrana ekleyerek uygulama gibi kullanın</div>
+    </div>
+    <button onclick="closeBanner()" style="background:rgba(255,255,255,.15);border:none;color:#fff;
+      width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer;flex-shrink:0">✕</button>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:12px">
+    <button id="installBannerBtn" onclick="bannerInstall()"
+      style="flex:1;background:#fff;color:#1A5F8A;border:none;border-radius:10px;
+      padding:10px;font-size:13px;font-weight:700;cursor:pointer">
+      📲 Ana Ekrana Ekle
+    </button>
+    <button onclick="closeBanner()" style="background:rgba(255,255,255,.15);border:none;color:#fff;
+      border-radius:10px;padding:10px 14px;font-size:12px;cursor:pointer">Daha Sonra</button>
+  </div>
+</div>
+
+<!-- İLK GİRİŞ KARŞILAMA MODAL -->
+<div id="welcomeModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:600;backdrop-filter:blur(4px);align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:24px 24px 0 0;padding:24px 20px 32px;
+    width:100%;max-width:480px;animation:slideUp2 .35s ease">
+    <div style="text-align:center;margin-bottom:16px">
+      <img id="welcomeIcon" src="" style="width:72px;height:72px;border-radius:18px;
+        box-shadow:0 4px 16px rgba(26,95,138,.3);margin-bottom:12px" alt="">
+      <div style="font-family:'Dela Gothic One',sans-serif;font-size:22px;color:#1E2832">
+        Hoş Geldiniz! 🎉
+      </div>
+      <div style="font-size:13px;color:#6B7685;margin-top:6px;line-height:1.6" id="welcomeUserName"></div>
+    </div>
+    <div style="background:#F0F4F8;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:#3A4552;margin-bottom:10px">KümesPro ile yapabilecekleriniz:</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="font-size:11px;color:#5C626E">🐓 Kümes & ırk takibi</div>
+        <div style="font-size:11px;color:#5C626E">🥚 Kuluçka yönetimi</div>
+        <div style="font-size:11px;color:#5C626E">🐣 Civciv ünitesi</div>
+        <div style="font-size:11px;color:#5C626E">💰 Satış & ödeme</div>
+        <div style="font-size:11px;color:#5C626E">📊 Finans takibi</div>
+        <div style="font-size:11px;color:#5C626E">☁️ Bulut yedekleme</div>
+      </div>
+    </div>
+    <button onclick="closeWelcome(true)"
+      style="width:100%;background:linear-gradient(135deg,#1A5F8A,#2980B9);color:#fff;
+      border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;
+      cursor:pointer;margin-bottom:8px">
+      📲 Başla!
+    </button>
+    <!-- Platform uyarısı: Standalone DEĞİLSE göster -->
+    <div id="welcomeInstallHint" style="display:none;background:#FFF8E1;border:1.5px solid #F9A825;
+      border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:#5C626E;line-height:1.65">
+      <div id="welcomeInstallMsg"></div>
+    </div>
+    <button onclick="closeWelcome(false)"
+      style="width:100%;background:#F0F4F8;color:#5C626E;border:none;border-radius:12px;
+      padding:12px;font-size:13px;cursor:pointer">
+      Ana ekrana eklemeden devam et
+    </button>
+  </div>
+</div>
+
+<style>
+@keyframes slideUp2{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+</style>
 
 <div class="app">
 
@@ -466,21 +565,27 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
     <!-- Yedek Al -->
     
     <div class="divlabel" style="margin-top:8px">Uygulama Kurulumu</div>
-    <div class="card mb8" id="pwaInstallCard" style="display:none">
+    <div class="card mb8" id="pwaInstallCard">
       <div class="row mb8">
         <div>
-          <div class="f13 fw">📲 Uygulamayı Kur</div>
-          <div class="f11 c2 mt4">Telefona veya bilgisayara uygulama olarak ekle</div>
+          <div class="f13 fw">📲 Ana Ekrana Ekle</div>
+          <div class="f11 c2 mt4" id="pwaInstallDesc">Yükleniyor...</div>
         </div>
-        <span style="font-size:24px">💾</span>
+        <span style="font-size:24px" id="pwaInstallIcon">📱</span>
       </div>
-      <button class="btn btn-p" id="pwaInstallBtn" onclick="pwaCur()" style="background:linear-gradient(135deg,#1A5C9E,#2980B9)">
-        📲 &nbsp;Ana Ekrana / Masaüstüne Ekle
+      <button class="btn btn-p" id="pwaInstallBtn" onclick="pwaCur()"
+        style="background:linear-gradient(135deg,#1A5C9E,#2980B9);margin-bottom:8px">
+        📲 Ana Ekrana / Masaüstüne Ekle
       </button>
+      <div id="pwaManualInst" style="display:none">
+        <div style="background:#F0F4F8;border-radius:10px;padding:12px;font-size:11px;color:#5C626E;line-height:1.8">
+          <div id="pwaManualText"></div>
+        </div>
+      </div>
     </div>
     <div class="card mb8" id="pwaInstalledCard" style="display:none">
       <div class="f13 fw">✅ Uygulama Kurulu</div>
-      <div class="f12 c2 mt4">KümesPro cihazınıza kurulu. Doğrudan açabilirsiniz.</div>
+      <div class="f12 c2 mt4" id="pwaInstalledDesc">KümesPro cihazınıza kurulu. Doğrudan açabilirsiniz.</div>
     </div>
         <div class="divlabel">Yedekleme & Excel</div>
 
@@ -548,7 +653,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
     </div>
 
     <div style="text-align:center;padding:14px;color:var(--gr3)">
-      <div class="f10 fw" style="letter-spacing:.5px">KümesPro v6.5 · HTML5 · LocalStorage</div>
+      <div class="f10 fw" style="letter-spacing:.5px">KümesPro v6.6 · HTML5 · PWA</div>
       <div class="f10" style="margin-top:4px">Tüm veriler cihazınızda saklanır · İnternet gerektirmez</div>
     </div>
   </div>
@@ -1836,6 +1941,229 @@ function excelAl(tip) {
   toast('Excel dosyasi indirildi: ' + dosyaAdi, 'ok', 3000);
 }
 
+
+// ─── PWA & INSTALL ────────────────────────────────────────────
+let pwaPrompt = null;
+let isIOS     = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+let isAndroid = /Android/.test(navigator.userAgent);
+let isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+
+// Icon data URL'yi bul
+function getIconUrl() {
+  const el = document.querySelector('link[rel="apple-touch-icon"]');
+  return el ? el.href : '';
+}
+
+// beforeinstallprompt - Chrome/Android
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  pwaPrompt = e;
+  updateInstallUI();
+});
+
+window.addEventListener('appinstalled', () => {
+  pwaPrompt = null;
+  isStandalone = true;
+  updateInstallUI();
+  closeBanner();
+  toast('KumesPro basariyla kuruldu!', 'ok', 3000);
+});
+
+function updateInstallUI() {
+  const card     = document.getElementById('pwaInstallCard');
+  const instCard = document.getElementById('pwaInstalledCard');
+  const desc     = document.getElementById('pwaInstallDesc');
+  const btn      = document.getElementById('pwaInstallBtn');
+  const manual   = document.getElementById('pwaManualInst');
+  const manualTx = document.getElementById('pwaManualText');
+  const instDesc = document.getElementById('pwaInstalledDesc');
+
+  if (!card) return;
+
+  // APK olarak yüklendiyse veya standalone (PWA) modundaysa
+  const isApk = /wv/.test(navigator.userAgent) || // Android WebView (APK)
+                (isAndroid && isStandalone);
+
+  if (isStandalone || isApk) {
+    // Zaten kurulu - uygulama olarak açılıyor
+    card.style.display = 'none';
+    if (instCard) instCard.style.display = 'block';
+    if (instDesc) {
+      if (isApk && !isStandalone) {
+        instDesc.textContent = 'KümesPro APK olarak kurulu ve çalışıyor. ✅';
+      } else {
+        instDesc.textContent = 'KümesPro cihazınıza kurulu. Doğrudan açabilirsiniz.';
+      }
+    }
+    return;
+  }
+
+  card.style.display = 'block';
+  if (instCard) instCard.style.display = 'none';
+
+  if (pwaPrompt) {
+    // Android Chrome - otomatik prompt
+    if (desc) desc.textContent = 'Android: Tek tıkla ana ekrana ekleyin';
+    if (btn) btn.style.display = 'flex';
+    if (manual) manual.style.display = 'none';
+  } else if (isIOS) {
+    // iPhone/iPad - manuel talimat
+    if (desc) desc.textContent = 'iPhone/iPad icin kurulum talimatlari:';
+    if (btn) btn.style.display = 'none';
+    if (manual) manual.style.display = 'block';
+    if (manualTx) manualTx.innerHTML =
+      '1. Alttaki <strong>Paylaş</strong> butonuna dokun (kare + ok)<br>' +
+      '2. Asagı kaydırarak <strong>"Ana Ekrana Ekle"</strong> secenegini bul<br>' +
+      '3. Sag ustteki <strong>"Ekle"</strong> butonuna dokun<br>' +
+      '4. KumesPro ana ekranınızda gorunecek 🎉';
+  } else {
+    // Masaustu Chrome/Edge
+    if (desc) desc.textContent = 'Tarayicı menusunden veya adres cubugu ikonuyla yukleyin';
+    if (btn) btn.style.display = 'none';
+    if (manual) manual.style.display = 'block';
+    if (manualTx) manualTx.innerHTML =
+      'Chrome: Adres cubugu sagındaki <strong>⊕ İndir</strong> ikonuna tiklayın<br>' +
+      'Edge: Adres cubugu sagındaki <strong>📲</strong> ikonuna tiklayın';
+  }
+}
+
+async function pwaCur() {
+  if (pwaPrompt) {
+    pwaPrompt.prompt();
+    const { outcome } = await pwaPrompt.userChoice;
+    if (outcome === 'accepted') toast('Yukleniyor...', 'ok');
+    pwaPrompt = null;
+  }
+}
+
+// ── BANNER ────────────────────────────────────────────────────
+function showInstallBanner() {
+  const isApk = /wv/.test(navigator.userAgent) || (isAndroid && isStandalone);
+  if (isStandalone || isApk) return; // Zaten kurulu / APK modunda
+  const banner = document.getElementById('installBanner');
+  const icon   = document.getElementById('installBannerIcon');
+  if (!banner) return;
+
+  // İkon ayarla
+  const iconUrl = getIconUrl();
+  if (icon && iconUrl) icon.src = iconUrl;
+
+  // Platform mesajı
+  const txt = document.getElementById('installBannerText');
+  if (txt) {
+    if (isIOS)     txt.textContent = 'Safari Paylas > Ana Ekrana Ekle ile yukleyin';
+    else if (isAndroid) txt.textContent = 'Ana ekrana ekleyerek uygulama gibi kullanin';
+    else           txt.textContent = 'Masaustu uygulamasi olarak yukleyin';
+  }
+
+  banner.style.display = 'block';
+
+  // 8 saniye sonra kendi kendine kapat
+  setTimeout(() => closeBanner(), 8000);
+}
+
+function closeBanner() {
+  const banner = document.getElementById('installBanner');
+  if (banner) banner.style.display = 'none';
+  sessionStorage.setItem('bannerClosed', '1');
+}
+
+async function bannerInstall() {
+  closeBanner();
+  if (pwaPrompt) {
+    pwaPrompt.prompt();
+    pwaPrompt = null;
+  } else if (isIOS) {
+    goTab('info');
+    toast('Bilgi sekmesindeki kurulum talimatlarına bakın', '', 4000);
+  }
+}
+
+// ── İLK GİRİŞ KARŞILAMA ─────────────────────────────────────
+function showWelcomeModal(user) {
+  const modal   = document.getElementById('welcomeModal');
+  const nameEl  = document.getElementById('welcomeUserName');
+  const iconEl  = document.getElementById('welcomeIcon');
+  if (!modal) return;
+
+  const name = user.user_metadata?.full_name || user.email || 'Merhaba';
+  if (nameEl) nameEl.textContent = name + ' olarak giris yapildi';
+
+  const iconUrl = getIconUrl();
+  if (iconEl && iconUrl) iconEl.src = iconUrl;
+
+  // Platform bazlı ana ekrana ekle uyarısı (standalone değilse)
+  if (!isStandalone) {
+    const hint = document.getElementById('welcomeInstallHint');
+    const msg  = document.getElementById('welcomeInstallMsg');
+    if (hint && msg) {
+      if (isIOS) {
+        msg.innerHTML = '📱 <strong>iPhone/iPad:</strong> Alttaki <strong>Paylaş</strong> butonuna (⬆️) dokun, ardından <strong>"Ana Ekrana Ekle"</strong> seçeneğini seçin. Uygulama gibi çalışır!';
+      } else if (isAndroid) {
+        if (pwaPrompt) {
+          msg.innerHTML = '🤖 <strong>Android:</strong> Aşağıdaki <strong>"Başla!"</strong> butonuna basın — ana ekrana otomatik eklenir!';
+        } else {
+          msg.innerHTML = '🤖 <strong>Android:</strong> Tarayıcı menüsünden <strong>"Ana Ekrana Ekle"</strong> seçeneğini seçin. Uygulama gibi çalışır!';
+        }
+      } else {
+        msg.innerHTML = '💻 <strong>Masaüstü:</strong> Adres çubuğu sağındaki <strong>⊕</strong> ikonuna tıklayarak yükleyebilirsiniz.';
+      }
+      hint.style.display = 'block';
+    }
+  }
+
+  modal.style.display = 'flex';
+}
+
+function closeWelcome(showInstall) {
+  const modal = document.getElementById('welcomeModal');
+  if (modal) modal.style.display = 'none';
+  localStorage.setItem('kp_welcomed', '1');
+  if (showInstall && !isStandalone) {
+    setTimeout(() => showInstallBanner(), 500);
+  }
+}
+
+// ── OTOMATİK GÜNCELLEME ───────────────────────────────────────
+async function checkForUpdate() {
+  try {
+    if (!('serviceWorker' in navigator)) return;
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const reg of regs) {
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Yeni sürüm var
+            console.log('[KP v' + APP_VERSION + '] Guncelleme bulundu, uygulanıyor...');
+            // Kullanıcıya kısa bilgi ver, sonra yenile
+            if (typeof toast === 'function') {
+              toast('🔄 Yeni güncelleme uygulanıyor...', '', 2000);
+            }
+            setTimeout(() => {
+              newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }, 800);
+          }
+        });
+      });
+      await reg.update();
+    }
+    // SW controller değişince sayfayı yenile
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      console.log('[KP] Sayfa güncellendi, yenileniyor...');
+      window.location.reload();
+    });
+  } catch(e) { /* önemsiz */ }
+}
+
+// Sayfa görünür olduğunda da güncelleme kontrol et
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    checkForUpdate();
+  }
+});
+
 // ─── YEDEK AL ─────────────────────────────────────────────────
 function yedekAl() {
   const now = new Date();
@@ -2054,155 +2382,10 @@ function yedekYukle(event) {
 }
 
 
-// ─── PWA INSTALL ────────────────────────────────────────────
-let pwaPrompt = null;
-window.addEventListener('beforeinstallprompt', (e) => {
-  e.preventDefault();
-  pwaPrompt = e;
-  const card = document.getElementById('pwaInstallCard');
-  if (card) card.style.display = 'block';
-  const installed = document.getElementById('pwaInstalledCard');
-  if (installed) installed.style.display = 'none';
-});
-window.addEventListener('appinstalled', () => {
-  pwaPrompt = null;
-  const card = document.getElementById('pwaInstallCard');
-  if (card) card.style.display = 'none';
-  const installed = document.getElementById('pwaInstalledCard');
-  if (installed) installed.style.display = 'block';
-  toast('✅ KumesPro basariyla kuruldu!', 'ok', 3000);
-});
-async function pwaCur() {
-  if (!pwaPrompt) {
-    // iOS icin manuel yonlendirme
-    alert("iPhone/iPad: Safari'de ac, alt menuden 'Ana Ekrana Ekle' secenegini kullan.\n\nAndroid: Tarayici menusunden 'Ana Ekrana Ekle' secenegini kullan.");
-    return;
-  }
-  pwaPrompt.prompt();
-  const { outcome } = await pwaPrompt.userChoice;
-  if (outcome === 'accepted') {
-    toast('KumesPro kuruluyor...', 'ok');
-  }
-  pwaPrompt = null;
-}
-// Kurulu mu kontrol et
-if (window.matchMedia('(display-mode: standalone)').matches ||
-    window.navigator.standalone === true) {
-  setTimeout(() => {
-    const installed = document.getElementById('pwaInstalledCard');
-    if (installed) installed.style.display = 'block';
-    const card = document.getElementById('pwaInstallCard');
-    if (card) card.style.display = 'none';
-  }, 500);
-}
 
-// ─── INIT ─────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════
+//  PWA — Kurulum, Güncelleme, Platform Algılama
+// ═══════════════════════════════════════════════════════════
 
-// ─── startApp — session doğrulandıktan sonra çağrılır ────────
-async function startApp(session) {
-  currentUser = session.user;
+const APP_VERSION = '6.6';
 
-  // Kullanıcı bilgilerini göster
-  try {
-    const avatarEl = document.getElementById('userAvatar');
-    const emailEl  = document.getElementById('userEmail');
-    if (currentUser.user_metadata?.avatar_url) {
-      avatarEl.innerHTML = '<img src="' + currentUser.user_metadata.avatar_url + '" alt="">';
-    } else {
-      avatarEl.textContent = (currentUser.email || 'U')[0].toUpperCase();
-    }
-    emailEl.textContent = currentUser.user_metadata?.full_name || currentUser.email || '';
-    document.getElementById('hdatePill').textContent = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch(e) { console.warn('UI init warn:', e); }
-
-  // Veri yükle
-  const ltEl = document.getElementById('loadingText');
-  ltEl.textContent = 'Veriler yükleniyor...';
-  document.getElementById('loadingOverlay').classList.remove('hidden');
-
-  try {
-    await dbYukle();
-    document.getElementById('loadingOverlay').classList.add('hidden');
-    goTab('anasayfa');
-  } catch(err) {
-    console.error('dbYukle hatası:', err);
-    // Hata mesajını göster - login'e yönlendirme
-    ltEl.innerHTML = '<span style="color:#FF8080">&#10060; ' + err.message + '</span><br><br>' +
-      '<span style="font-size:11px;color:#aaa">Supabase SQL Editor&#39;da schema.sql calistirdiniz mi?<br>' +
-      'Kullanici: ' + (currentUser.email || '') + '</span>';
-    // Yine de boş veriyle devam et
-    setTimeout(() => {
-      document.getElementById('loadingOverlay').classList.add('hidden');
-      goTab('anasayfa');
-    }, 4000);
-  }
-}
-
-async function init() {
-  // URL hata kontrolü
-  const urlP = new URLSearchParams(window.location.search);
-  if (urlP.get('error')) {
-    document.getElementById('loadingText').innerHTML =
-      '<span style="color:#FF8080">Hata: ' + (urlP.get('error_description') || urlP.get('error')) + '</span>';
-    setTimeout(() => window.location.replace('index.html'), 3000);
-    return;
-  }
-
-  // Direkt session al - en hızlı ve güvenilir yol
-  try {
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      await startApp(session);
-      sb.auth.onAuthStateChange(ev => {
-        if (ev === 'SIGNED_OUT') window.location.replace('index.html');
-      });
-    } else {
-      // Session yok ama OAuth callback olabilir - 3sn bekle
-      let done = false;
-      const { data: { subscription } } = sb.auth.onAuthStateChange(async (ev, s) => {
-        if (done) return;
-        if (s && (ev === 'SIGNED_IN' || ev === 'INITIAL_SESSION' || ev === 'TOKEN_REFRESHED')) {
-          done = true;
-          subscription.unsubscribe();
-          await startApp(s);
-          sb.auth.onAuthStateChange(e2 => {
-            if (e2 === 'SIGNED_OUT') window.location.replace('index.html');
-          });
-        } else if (ev === 'INITIAL_SESSION' && !s) {
-          done = true;
-          subscription.unsubscribe();
-          window.location.replace('index.html');
-        }
-      });
-      setTimeout(() => {
-        if (!done) { done = true; window.location.replace('index.html'); }
-      }, 5000);
-    }
-  } catch(e) {
-    console.error('init hatasi:', e);
-    window.location.replace('index.html');
-  }
-}
-
-init();
-</script>
-
-  <script>
-    // Service Worker — sadece PWA kurulumu için, caching yok
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', async () => {
-        try {
-          // Önce tüm cache'leri temizle (veriler yükleniyor sorunu için)
-          const keys = await caches.keys();
-          await Promise.all(keys.map(k => caches.delete(k)));
-          // SW kaydet
-          await navigator.serviceWorker.register('/kumespro/sw.js', {scope: '/kumespro/'});
-          console.log('[SW] v6.5 registered');
-        } catch(e) {
-          console.warn('[SW] Error:', e);
-        }
-      });
-    }
-  </script>
-</body>
-</html>
