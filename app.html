@@ -496,6 +496,8 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
 <div class="page on" id="page-anasayfa">
   <div class="sec" style="padding-top:16px">
     <div class="sg" id="dStats"></div>
+    <div class="divlabel" id="dTurBreakdownLabel" style="display:none">Türlere Göre Dağılım</div>
+    <div class="sg" id="dTurBreakdown"></div>
     <div class="divlabel">Aktif Kuluçkalar</div><div id="dHatch"></div>
     <div class="divlabel">Civciv Üniteleri</div><div id="dCivciv"></div>
     <div class="divlabel">Bekleyen Ödemeler</div><div id="dAlacak"></div>
@@ -896,6 +898,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
     <select class="fs" id="gTur">
       <option value="yem">🌾 Yem / Yiyecek</option>
       <option value="ilac">💊 İlaç / Vitamin</option>
+      <option value="hayvan">🐓 Canlı Hayvan</option>
       <option value="ekipman">🔧 Ekipman / Malzeme</option>
       <option value="kulucka">🥚 Kuluçka Maliyeti</option>
       <option value="bakim">🧹 Bakım / Temizlik</option>
@@ -1221,19 +1224,55 @@ function rDash() {
   const now = new Date();
   document.getElementById('hdatePill').textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
   let tH=0, tC=0, tG=0, tGid=0;
-  D.kumesler.forEach(k => tH += kTot(k));
+
+  // Türlere göre kümes ve hayvan sayımı
+  const turBreakdown = {}; // { tavuk: {kumes:N, hayvan:N}, guvercin:..., ... }
+  D.kumesler.forEach(k => {
+    const sayi = kTot(k);
+    tH += sayi;
+    const tur = k.tur || 'diger';
+    if (!turBreakdown[tur]) turBreakdown[tur] = { kumes:0, hayvan:0 };
+    turBreakdown[tur].kumes  += 1;
+    turBreakdown[tur].hayvan += sayi;
+  });
+
   D.civcivUniteleri.forEach(u => tC += u.adet || 0);
   D.satislar.forEach(s => tG += s.toplam || 0);
   D.giderler.forEach(g => tGid += g.tutar || 0);
   const net = tG - tGid;
-  document.getElementById('dStats').innerHTML = `
-    <div class="sb" data-icon="🏠"><div class="sl">Kümes</div><div class="sv">${D.kumesler.length}</div><div class="ss">aktif kümes</div></div>
-    <div class="sb" data-icon="🐓"><div class="sl">Hayvan</div><div class="sv">${tH}</div><div class="ss">kümeslerde</div></div>
+
+  // Üst sıra: özet kartlar
+  let html = `
+    <div class="sb" data-icon="🏠"><div class="sl">Toplam Kümes</div><div class="sv">${D.kumesler.length}</div><div class="ss">aktif kümes</div></div>
+    <div class="sb" data-icon="🐓"><div class="sl">Toplam Hayvan</div><div class="sv">${tH}</div><div class="ss">tüm türler</div></div>
     <div class="sb" data-icon="🐣"><div class="sl">Civciv</div><div class="sv">${tC}</div><div class="ss">ünitede</div></div>
     <div class="sb ${net>=0?'sb-pri':'sb-ora'}" data-icon="💰">
       <div class="sl">Net Kâr</div><div class="sv" style="font-size:20px">${fm(net)}</div>
       <div class="ss">${net>=0?'kârda':'zararda'}</div>
     </div>`;
+  document.getElementById('dStats').innerHTML = html;
+
+  // Tür kırılımı: sadece o türden kümes varsa göster
+  const turSira = ['tavuk','guvercin','hindi','kaz','bildircin','keklik','karisik','diger'];
+  const breakdownEl = document.getElementById('dTurBreakdown');
+  if (breakdownEl) {
+    let bH = '';
+    turSira.forEach(t => {
+      if (turBreakdown[t]) {
+        const b = turBreakdown[t];
+        bH += `<div class="sb" data-icon="${TI(t)}">
+          <div class="sl">${TL(t)}</div>
+          <div class="sv">${b.hayvan}</div>
+          <div class="ss">${b.kumes} kümes</div>
+        </div>`;
+      }
+    });
+    breakdownEl.innerHTML = bH;
+    // Etiketi de göster/gizle
+    const lblEl = document.getElementById('dTurBreakdownLabel');
+    if (lblEl) lblEl.style.display = bH ? 'block' : 'none';
+  }
+
   const aktif = D.kuluckalar.filter(k => k.durum !== 'tamamlandi');
   let hH = '';
   if (!aktif.length) hH = '<div class="empty" style="padding:18px"><div class="et">Aktif kuluçka yok</div></div>';
@@ -1870,7 +1909,7 @@ function rFinans(){
     <div class="sb" data-icon="📉"><div class="sl">Toplam Gider</div><div class="sv cr" style="font-size:20px">${fm(tGid)}</div></div>
     <div class="sb ${net>=0?'sb-pri':'sb-ora'}" data-icon="💰" style="grid-column:span 2">
       <div class="sl">Net Kâr / Zarar</div><div class="dg" style="font-size:28px;color:#fff">${fm(net)}</div></div>`;
-  const tL={yem:'🌾 Yem',ilac:'💊 İlaç',ekipman:'🔧 Ekipman',kulucka:'🥚 Kuluçka',bakim:'🧹 Bakım',enerji:'⚡ Enerji',kumes:'🏠 Kümes',diger:'📦 Diğer'};
+  const tL={yem:'🌾 Yem',ilac:'💊 İlaç',hayvan:'🐓 Canlı Hayvan',ekipman:'🔧 Ekipman',kulucka:'🥚 Kuluçka',bakim:'🧹 Bakım',enerji:'⚡ Enerji',kumes:'🏠 Kümes',diger:'📦 Diğer'};
   const byT={};D.giderler.forEach(g=>{if(!byT[g.tur])byT[g.tur]=[];byT[g.tur].push(g)});
   let h='';
   if(!D.giderler.length)h='<div class="empty"><div class="et">Henüz gider kaydı yok</div></div>';
@@ -1988,7 +2027,7 @@ function excelAl(tip) {
   if (tip === 'giderler' || tip === 'tumu') {
     csvIcerik += 'GIDERLER\n';
     csvIcerik += csvSatir(['Tarih','Tur','Aciklama','Tutar','Odenen','Kalan','Kümes']) + '\n';
-    const turL2 = {yem:'Yem',ilac:'Ilac',ekipman:'Ekipman',kulucka:'Kulucka',
+    const turL2 = {yem:'Yem',ilac:'Ilac',hayvan:'Canli Hayvan',ekipman:'Ekipman',kulucka:'Kulucka',
                    bakim:'Bakim',enerji:'Enerji',kumes:'Kumes',diger:'Diger'};
     D.giderler.forEach(g => {
       const km = D.kumesler.find(k => k.id === g.kumesId);
