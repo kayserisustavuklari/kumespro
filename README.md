@@ -1,4 +1,4 @@
-# Kümespro 6.5
+# Kümespro 6.6
  Ne Yapabiliyor?
 🏠 Kümes Yönetimi
 
