@@ -499,7 +499,11 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
     <div class="divlabel" id="dTurBreakdownLabel" style="display:none">Türlere Göre Dağılım</div>
     <div class="sg" id="dTurBreakdown"></div>
     <div class="divlabel">Aktif Kuluçkalar</div><div id="dHatch"></div>
-    <div class="divlabel">Civciv Üniteleri</div><div id="dCivciv"></div>
+    <div class="row" style="margin-top:14px;margin-bottom:8px">
+      <div class="divlabel" style="margin:0">Civciv Üniteleri</div>
+      <button class="btn btn-s btn-sm" onclick="openYeniUnite()" style="width:auto;padding:6px 12px">+ Yeni Ünite</button>
+    </div>
+    <div id="dCivciv"></div>
     <div class="divlabel">Bekleyen Ödemeler</div><div id="dAlacak"></div>
     <div class="divlabel">Uyarılar</div><div id="dAlert"></div>
     <div class="divlabel">Son Satışlar</div><div id="dSales"></div>
@@ -850,7 +854,13 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
     <div class="fg"><label class="fl">💀 Ölü Civciv</label><input type="number" class="fi" id="cO" value="0" min="0"></div>
     <div class="fg"><label class="fl">📅 Tarih</label><input type="date" class="fi" id="cT"></div>
   </div>
-  <div class="fg"><label class="fl">Hedef Ünite</label><select class="fs" id="cU"></select></div>
+  <div class="fg">
+    <label class="fl">Hedef Ünite</label>
+    <div style="display:flex;gap:6px">
+      <select class="fs" id="cU" style="flex:1"></select>
+      <button class="btn btn-s btn-sm" onclick="openYeniUniteFromCikim()" style="width:auto;padding:8px 12px;flex-shrink:0">+ Yeni</button>
+    </div>
+  </div>
   <div class="fg"><label class="fl">Not</label><textarea class="fta" id="cNot" style="min-height:50px" placeholder="Çıkım notları..."></textarea></div>
   <div class="mf">
     <button class="btn btn-s" style="flex:1" onclick="closeM('mCik')">İptal</button>
@@ -864,9 +874,12 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <input type="hidden" id="uniteId">
   <div id="uniteContent"></div>
   <div class="mf" style="flex-wrap:wrap;gap:8px">
-    <button class="btn btn-g btn-sm" style="flex:1" onclick="ucIslem('ekle')">🐣 Civciv Ekle</button>
-    <button class="btn btn-d btn-sm" style="flex:1" onclick="ucIslem('cikar')">➖ Civciv Çıkar</button>
-    <button class="btn btn-s" style="width:100%" onclick="closeM('mUnite')">Kapat</button>
+    <button class="btn btn-g btn-sm" style="flex:1" onclick="ucIslem('ekle')" id="ucBtnEkle">🐣 Ekle</button>
+    <button class="btn btn-d btn-sm" style="flex:1" onclick="ucIslem('cikar')" id="ucBtnCik">➖ Çıkar</button>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-d btn-sm" style="flex:1" onclick="delUnite()">🗑 Üniteyi Sil</button>
+      <button class="btn btn-s btn-sm" style="flex:2" onclick="closeM('mUnite')">Kapat</button>
+    </div>
   </div>
 </div></div>
 
@@ -883,6 +896,35 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <div class="mf">
     <button class="btn btn-s" style="flex:1" onclick="closeM('mUC')">İptal</button>
     <button class="btn btn-p" style="flex:2" onclick="saveUC()">Uygula</button>
+  </div>
+</div></div>
+
+<!-- YENİ ÜNİTE OLUŞTUR -->
+<div class="mo" id="mUniteYeni"><div class="modal">
+  <div class="mt2">🆕 Yeni Ünite</div>
+  <div class="fg">
+    <label class="fl">Ünite Türü</label>
+    <select class="fs" id="uyTip">
+      <option value="civciv">🐣 Civciv</option>
+      <option value="yavru_guvercin">🐦 Yavru Güvercin</option>
+    </select>
+  </div>
+  <div class="fg">
+    <label class="fl">Ünite Adı</label>
+    <input type="text" class="fi" id="uyAd" placeholder="Örn: Kuluçka 1, Yavru Bölmesi A">
+  </div>
+  <div class="fg">
+    <label class="fl">Başlangıç Adeti (opsiyonel)</label>
+    <input type="number" class="fi" id="uyAdet" placeholder="0" min="0" value="0">
+  </div>
+  <div class="fg">
+    <label class="fl">Çıkım / Doğum Tarihi (opsiyonel)</label>
+    <input type="date" class="fi" id="uyTarih">
+    <div class="f11 c3 mt4">Bu tarih yaş hesabında kullanılır</div>
+  </div>
+  <div class="mf">
+    <button class="btn btn-s" style="flex:1" onclick="closeM('mUniteYeni')">İptal</button>
+    <button class="btn btn-p" style="flex:2" onclick="saveYeniUnite()">Oluştur</button>
   </div>
 </div></div>
 
@@ -1098,9 +1140,17 @@ async function dbYukle() {
     kaynaklar: r.kaynaklar || [], toplamYumurta: r.toplam_yumurta || 0,
     not: r.not_, durum: r.durum, cikim: r.cikim
   }));
-  D.civcivUniteleri = (u.data || []).map(r => ({
-    id: r.id, ad: r.ad, adet: r.adet || 0, hareketler: r.hareketler || []
-  }));
+  D.civcivUniteleri = (u.data || []).map(r => {
+    const hr = r.hareketler || [];
+    // Meta hareket varsa tip oradan al, yoksa civciv varsay
+    const meta = hr.find(x => x && x._meta);
+    return {
+      id: r.id, ad: r.ad,
+      tip: (meta && meta.tip) || 'civciv',  // 'civciv' veya 'yavru_guvercin'
+      adet: r.adet || 0,
+      hareketler: hr.filter(x => !(x && x._meta))  // meta'yı UI listesinden filtrele
+    };
+  });
   D.satislar = (s.data || []).map(r => ({
     id: r.id, musteri: r.musteri, tarih: r.tarih,
     urunler: r.urunler || [], toplam: parseFloat(r.toplam) || 0,
@@ -1195,10 +1245,81 @@ async function dbKuluckaSil(id) {
 }
 
 // CİVCİV ÜNİTE
+async function dbUniteEkle(u) {
+  return dbSave(async () => {
+    const hareketlerWithMeta = [
+      { _meta: true, tip: u.tip || 'civciv' },
+      ...(u.hareketler || []).filter(x => !(x && x._meta))
+    ];
+    const { data, error } = await sb.from('civciv_uniteleri').insert({
+      user_id: currentUser.id, ad: u.ad, adet: u.adet || 0, hareketler: hareketlerWithMeta
+    }).select().single();
+    if (error) throw error;
+    u.id = data.id;
+    D.civcivUniteleri.push(u);
+  });
+}
+
+async function dbUniteSil(id) {
+  return dbSave(async () => {
+    const { error } = await sb.from('civciv_uniteleri').delete().eq('id', id);
+    if (error) throw error;
+    D.civcivUniteleri = D.civcivUniteleri.filter(u => u.id !== id);
+  });
+}
+
+function openYeniUnite() {
+  document.getElementById('uyTip').value   = 'civciv';
+  document.getElementById('uyAd').value    = '';
+  document.getElementById('uyAdet').value  = 0;
+  document.getElementById('uyTarih').value = td();
+  openM('mUniteYeni');
+}
+
+// Kuluçka çıkım modalından "+ Yeni" tıklanınca: çıkım açık kalır, sonra ünite seçilir
+function openYeniUniteFromCikim() {
+  openYeniUnite();
+}
+
+async function saveYeniUnite() {
+  const tip   = document.getElementById('uyTip').value;
+  const ad    = document.getElementById('uyAd').value.trim();
+  const adet  = parseInt(document.getElementById('uyAdet').value) || 0;
+  const tarih = document.getElementById('uyTarih').value || td();
+
+  if (!ad) { alert('Ünite adı gerekli!'); return; }
+
+  const u = {
+    ad, tip, adet,
+    hareketler: adet > 0
+      ? [{ islem:'ekle', adet, tarih, not:'Başlangıç' }]
+      : []
+  };
+
+  await dbUniteEkle(u);
+  closeM('mUniteYeni');
+
+  // Eğer çıkım modalı açıksa dropdown'u tazele ve yeniyi seç
+  const cikModal = document.getElementById('mCik');
+  if (cikModal && cikModal.classList.contains('on')) {
+    document.getElementById('cU').innerHTML =
+      D.civcivUniteleri.map(x=>`<option value="${x.id}">${uniteTipI(x.tip||'civciv')} ${x.ad} (${x.adet})</option>`).join('');
+    document.getElementById('cU').value = u.id;
+  }
+
+  if (curTab==='anasayfa') rDash();
+  toast('✅ Yeni ünite oluşturuldu!', 'ok');
+}
+
 async function dbUniteGuncelle(u) {
   return dbSave(async () => {
+    // Meta'yı hareketlerin başına ekleyerek kaydet
+    const hareketlerWithMeta = [
+      { _meta: true, tip: u.tip || 'civciv' },
+      ...(u.hareketler || []).filter(x => !(x && x._meta))
+    ];
     const { error } = await sb.from('civciv_uniteleri').update({
-      ad: u.ad, adet: u.adet, hareketler: u.hareketler || []
+      ad: u.ad, adet: u.adet, hareketler: hareketlerWithMeta
     }).eq('id', u.id);
     if (error) throw error;
     const i = D.civcivUniteleri.findIndex(x => x.id === u.id);
@@ -1302,7 +1423,7 @@ function closeM(id) { document.getElementById(id).classList.remove('on'); }
 function rDash() {
   const now = new Date();
   document.getElementById('hdatePill').textContent = now.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
-  let tH=0, tC=0, tG=0, tGid=0;
+  let tH=0, tC=0, tYG=0, tG=0, tGid=0;
 
   // Türlere göre kümes ve hayvan sayımı
   const turBreakdown = {}; // { tavuk: {kumes:N, hayvan:N}, guvercin:..., ... }
@@ -1315,16 +1436,23 @@ function rDash() {
     turBreakdown[tur].hayvan += sayi;
   });
 
-  D.civcivUniteleri.forEach(u => tC += u.adet || 0);
+  D.civcivUniteleri.forEach(u => {
+    if ((u.tip||'civciv') === 'yavru_guvercin') tYG += u.adet || 0;
+    else tC += u.adet || 0;
+  });
   D.satislar.forEach(s => tG += s.toplam || 0);
   D.giderler.forEach(g => tGid += g.tutar || 0);
   const net = tG - tGid;
 
-  // Üst sıra: özet kartlar
+  // Üst sıra: özet kartlar (civciv ve yavru güvercin ayrı, hiç yoksa Civciv'i göster)
+  const civcivKart = (tYG > 0)
+    ? `<div class="sb" data-icon="🐣"><div class="sl">Civciv</div><div class="sv">${tC}</div><div class="ss">+ <strong>${tYG}</strong> yavru güvercin 🐦</div></div>`
+    : `<div class="sb" data-icon="🐣"><div class="sl">Civciv</div><div class="sv">${tC}</div><div class="ss">ünitede</div></div>`;
+
   let html = `
     <div class="sb" data-icon="🏠"><div class="sl">Toplam Kümes</div><div class="sv">${D.kumesler.length}</div><div class="ss">aktif kümes</div></div>
     <div class="sb" data-icon="🐓"><div class="sl">Toplam Hayvan</div><div class="sv">${tH}</div><div class="ss">tüm türler</div></div>
-    <div class="sb" data-icon="🐣"><div class="sl">Civciv</div><div class="sv">${tC}</div><div class="ss">ünitede</div></div>
+    ${civcivKart}
     <div class="sb ${net>=0?'sb-pri':'sb-ora'}" data-icon="💰">
       <div class="sl">Net Kâr</div><div class="sv" style="font-size:20px">${fm(net)}</div>
       <div class="ss">${net>=0?'kârda':'zararda'}</div>
@@ -1369,10 +1497,19 @@ function rDash() {
   document.getElementById('dHatch').innerHTML = hH;
   let cH = '';
   D.civcivUniteleri.forEach(u => {
+    const tipIc = uniteTipI(u.tip||'civciv');
+    const tipAd = uniteTipL(u.tip||'civciv');
+    const ortYas = uniteOrtYas(u);
     cH += `<div class="uc" onclick="openUnite('${u.id}')">
-      <div class="uc-name">${u.ad}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div class="uc-name">${u.ad}</div>
+        <span style="background:rgba(255,255,255,.18);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;color:#fff">${tipIc} ${tipAd}</span>
+      </div>
       <div class="row" style="align-items:flex-end">
-        <div><div class="uc-num">${u.adet||0}</div><div class="uc-label">Civciv · Düzenlemek için tıkla</div></div>
+        <div>
+          <div class="uc-num">${u.adet||0}</div>
+          <div class="uc-label">${tipAd}${ortYas!=null?' · ⏱ '+gunStr(ortYas):''}</div>
+        </div>
       </div>
     </div>`;
   });
@@ -1411,37 +1548,112 @@ function rDash() {
 // ─── CİVCİV ÜNİTESİ ──────────────────────────────────────────
 function openUnite(id) {
   const u = D.civcivUniteleri.find(x => x.id === id); if (!u) return;
+  const tip = u.tip || 'civciv';
+  const tipAd = uniteTipL(tip), tipIc = uniteTipI(tip);
   document.getElementById('uniteId').value = id;
-  document.getElementById('mUniteTitle').textContent = u.ad;
+  document.getElementById('mUniteTitle').textContent = `${tipIc} ${u.ad}`;
+  // Butonları tipine göre güncelle
+  const btnE = document.getElementById('ucBtnEkle');
+  const btnC = document.getElementById('ucBtnCik');
+  if (btnE) btnE.innerHTML = `${tipIc} ${tipAd} Ekle`;
+  if (btnC) btnC.innerHTML = `➖ ${tipAd} Çıkar`;
   rUniteContent(id); openM('mUnite');
 }
+
+async function delUnite() {
+  const id = document.getElementById('uniteId').value;
+  const u = D.civcivUniteleri.find(x=>x.id===id); if(!u) return;
+  if (!confirm(`"${u.ad}" ünitesini silmek istiyor musunuz?\n\nBu işlem geri alınamaz!`)) return;
+  await dbUniteSil(id);
+  closeM('mUnite');
+  if (curTab==='anasayfa') rDash();
+  toast('🗑 Ünite silindi');
+}
+// Civciv ünitesi tip yardımcıları
+function uniteTipL(t)  { return t==='yavru_guvercin' ? 'Yavru Güvercin' : 'Civciv'; }
+function uniteTipI(t)  { return t==='yavru_guvercin' ? '🐦' : '🐣'; }
+
+// Hareketlerden ağırlıklı ortalama yaş (gün) hesapla
+function uniteOrtYas(u) {
+  const ekleHv = (u.hareketler||[]).filter(h => h.islem==='ekle' && h.tarih);
+  if (!ekleHv.length || !(u.adet>0)) return null;
+
+  // Mevcut adet bazlı: en yeni partilerden en eskiye doğru
+  // FIFO mantığı ile çıkarmaları bilmiyoruz, basit yöntem:
+  // Tüm "ekle" hareketlerinin ağırlıklı ortalaması (girenler bazında)
+  const now = new Date();
+  let topGunAdet = 0, topAdet = 0;
+  ekleHv.forEach(h => {
+    const gun = Math.max(0, Math.floor((now - new Date(h.tarih+'T00:00:00')) / 86400000));
+    topGunAdet += gun * (h.adet||0);
+    topAdet    += (h.adet||0);
+  });
+  if (!topAdet) return null;
+  return Math.round(topGunAdet / topAdet);
+}
+
+// Yaş gösterimi: 1g, 5g, 12g, 35g vs.
+function gunStr(g) {
+  if (g == null) return '';
+  if (g === 0) return 'bugün';
+  if (g < 30) return g + ' günlük';
+  const ay = Math.floor(g/30), kg = g % 30;
+  return kg ? ay+'ay '+kg+'g' : ay + ' aylık';
+}
+
 function rUniteContent(id) {
   const u = D.civcivUniteleri.find(x => x.id === id); if (!u) return;
-  const hvs = (u.hareketler||[]).slice(-10).reverse();
-  const totEk = (u.hareketler||[]).filter(h=>h.islem==='ekle').reduce((s,h)=>s+h.adet,0);
-  const totCk = (u.hareketler||[]).filter(h=>h.islem==='cikar').reduce((s,h)=>s+h.adet,0);
+  const tip = u.tip || 'civciv';
+  const tipAd = uniteTipL(tip), tipIc = uniteTipI(tip);
+
+  const hvAll = (u.hareketler||[]);
+  const hvs = hvAll.slice(-10).reverse();
+  const totEk = hvAll.filter(h=>h.islem==='ekle').reduce((s,h)=>s+h.adet,0);
+  const totCk = hvAll.filter(h=>h.islem==='cikar').reduce((s,h)=>s+h.adet,0);
+  const ortYas = uniteOrtYas(u);
+
   let h = `<div class="uc" style="cursor:default;margin-bottom:14px">
-    <div class="uc-name">${u.ad}</div><div class="uc-num">${u.adet||0}</div>
-    <div class="uc-label">Mevcut Civciv</div></div>
-    <div style="display:flex;gap:8px;margin-bottom:14px">
-      <div class="card" style="flex:1;text-align:center;padding:12px">
-        <div class="f9 c3 fw" style="letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Toplam Giren</div>
-        <div class="cg dg" style="font-size:22px">${totEk}</div>
-      </div>
-      <div class="card" style="flex:1;text-align:center;padding:12px">
-        <div class="f9 c3 fw" style="letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Toplam Çıkan</div>
-        <div class="cr dg" style="font-size:22px">${totCk}</div>
-      </div>
-    </div>`;
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+      <div class="uc-name">${u.ad}</div>
+      <span style="background:rgba(255,255,255,.18);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;color:#fff">
+        ${tipIc} ${tipAd}
+      </span>
+    </div>
+    <div class="uc-num">${u.adet||0}</div>
+    <div class="uc-label">Mevcut ${tipAd}</div>
+    ${ortYas != null ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.15);font-size:12px;color:rgba(255,255,255,.85)">
+      📅 Ortalama yaş: <strong>${gunStr(ortYas)}</strong>
+    </div>` : ''}
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <div class="card" style="flex:1;text-align:center;padding:12px">
+      <div class="f9 c3 fw" style="letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Toplam Giren</div>
+      <div class="cg dg" style="font-size:22px">${totEk}</div>
+    </div>
+    <div class="card" style="flex:1;text-align:center;padding:12px">
+      <div class="f9 c3 fw" style="letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px">Toplam Çıkan</div>
+      <div class="cr dg" style="font-size:22px">${totCk}</div>
+    </div>
+  </div>`;
+
   if (hvs.length) {
     h += '<div class="divlabel">Hareket Geçmişi</div>';
+    const now = new Date();
     hvs.forEach(hv => {
+      // Bu partinin yaşı (sadece ekle hareketleri için)
+      let yasRoz = '';
+      if (hv.islem==='ekle' && hv.tarih) {
+        const g = Math.max(0, Math.floor((now - new Date(hv.tarih+'T00:00:00')) / 86400000));
+        yasRoz = `<span class="b bw" style="margin-left:6px;background:#FFF3E0;color:#E65100;font-weight:700">⏱ ${gunStr(g)}</span>`;
+      }
       h += `<div class="hv-card mb8"><div class="row">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:${hv.islem==='ekle'?'var(--green-l)':'var(--red-l)'}">
-            ${hv.islem==='ekle'?'🐣':'📦'}</div>
-          <div><div class="f12 fw">${hv.islem==='ekle'?'Eklendi':'Çıkarıldı'}</div>
-          ${hv.not?`<div class="f11 c3">${hv.not}</div>`:''}</div>
+            ${hv.islem==='ekle'?tipIc:'📦'}</div>
+          <div>
+            <div class="f12 fw">${hv.islem==='ekle'?'Eklendi':'Çıkarıldı'}${yasRoz}</div>
+            ${hv.not?`<div class="f11 c3">${hv.not}</div>`:''}
+          </div>
         </div>
         <div style="text-align:right">
           <div class="fw f13 ${hv.islem==='ekle'?'cg':'cr'}">${hv.islem==='ekle'?'+':'-'}${hv.adet}</div>
@@ -1450,11 +1662,17 @@ function rUniteContent(id) {
       </div></div>`;
     });
   } else h += '<div class="empty" style="padding:20px"><div class="et">Henüz hareket yok</div></div>';
+
   document.getElementById('uniteContent').innerHTML = h;
 }
 function ucIslem(islem) {
+  const id = document.getElementById('uniteId').value;
+  const u  = D.civcivUniteleri.find(x => x.id === id);
+  const tip = u ? (u.tip||'civciv') : 'civciv';
+  const tipAd = uniteTipL(tip), tipIc = uniteTipI(tip);
+
   document.getElementById('ucIslemVal').value = islem;
-  document.getElementById('mUCTitle').textContent = islem==='ekle' ? '🐣 Civciv Ekle' : '📦 Civciv Çıkar';
+  document.getElementById('mUCTitle').textContent = islem==='ekle' ? `${tipIc} ${tipAd} Ekle` : `📦 ${tipAd} Çıkar`;
   document.getElementById('ucAdet').value = 1;
   document.getElementById('ucNot').value = '';
   document.getElementById('ucTarih').value = td();
@@ -1722,7 +1940,7 @@ function openCik(id){
   document.getElementById('cO').value=0;document.getElementById('cT').value=td();document.getElementById('cNot').value='';
   const topY=(k.kaynaklar||[]).reduce((s,r)=>s+(r.adet||0),0)||k.toplamYumurta||0;
   document.getElementById('cikInfo').textContent=`Bu kuluçkada toplam ${topY} yumurta var.`;
-  document.getElementById('cU').innerHTML=D.civcivUniteleri.map(u=>`<option value="${u.id}">${u.ad} (${u.adet})</option>`).join('');
+  document.getElementById('cU').innerHTML=D.civcivUniteleri.map(u=>`<option value="${u.id}">${uniteTipI(u.tip||'civciv')} ${u.ad} (${u.adet})</option>`).join('');
   openM('mCik');
 }
 async function saveCik(){
