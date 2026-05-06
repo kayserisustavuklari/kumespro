@@ -1,5 +1,18 @@
-# Kümespro 6.6
+# Kümespro 6.7
+v6.7 yayında! 🦚
+
+Yapılan Güncellemeler
+
+🦚 Tavus Kuşu kuluçkası
+
+Yeni kuluçka oluştururken seçilebilir: 🦚 Tavus Kuşu — 28 gün
+
+Kuluçka süresi 28 gün olarak otomatik ayarlanır
+
+Hindi/Kaz ile aynı süre olduğu için ekipman planlamasında uyumlu
+
  Ne Yapabiliyor?
+ 
 🏠 Kümes Yönetimi
 
 Sınırsız kümes, her kümeste birden fazla ırk/grup (Brahma, Leghorn, Bıldırcın, Keklik, Güvercin...), erkek/dişi ayrımı, doğum tarihi ve yaş takibi, hayvan ekle/çıkar geçmişi
