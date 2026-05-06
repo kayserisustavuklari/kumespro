@@ -743,6 +743,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
       <option value="keklik">🦜 Keklik</option>
       <option value="hindi">🦃 Hindi</option>
       <option value="kaz">🪿 Kaz / Ördek</option>
+      <option value="tavus">🦚 Tavus Kuşu</option>
       <option value="karisik">🐦 Karışık Tür</option>
       <option value="diger">🐾 Diğer</option>
     </select>
@@ -768,9 +769,12 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <input type="hidden" id="kDId">
   <div id="kDContent"></div>
   <div class="mf" style="flex-wrap:wrap;gap:8px">
-    <button class="btn btn-s btn-sm" style="flex:1" onclick="editK()">✏️ Düzenle</button>
-    <button class="btn btn-g btn-sm" style="flex:1" onclick="openHA()">➕ Hayvan</button>
-    <button class="btn btn-d btn-sm" style="flex:1" onclick="delK()">🗑</button>
+    <button class="btn btn-g btn-sm" style="flex:1" onclick="openHA('ekle')">➕ Hayvan Ekle</button>
+    <button class="btn btn-d btn-sm" style="flex:1" onclick="openHA('cikar')">➖ Çıkar (Ölüm)</button>
+    <div style="display:flex;gap:8px;width:100%">
+      <button class="btn btn-s btn-sm" style="flex:1" onclick="editK()">✏️ Düzenle</button>
+      <button class="btn btn-d btn-sm" style="flex:1" onclick="delK()">🗑 Sil</button>
+    </div>
     <button class="btn btn-s" style="width:100%" onclick="closeM('mKDet')">Kapat</button>
   </div>
 </div></div>
@@ -1104,8 +1108,8 @@ function syncShow(state) {
 const td  = () => new Date().toISOString().split('T')[0];
 const fd  = d  => d ? new Date(d + 'T00:00:00').toLocaleDateString('tr-TR') : '-';
 const fm  = n  => '₺' + Number(n || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const TI  = t  => ({ guvercin:'🕊', tavuk:'🐓', hindi:'🦃', kaz:'🪿', karisik:'🐦', bildircin:'🪶', keklik:'🦜', diger:'🐾' }[t] || '🐾');
-const TL  = t  => ({ guvercin:'Güvercin', tavuk:'Tavuk', hindi:'Hindi', kaz:'Kaz/Ördek', karisik:'Karışık', bildircin:'Bıldırcın', keklik:'Keklik', diger:'Diğer' }[t] || t);
+const TI  = t  => ({ guvercin:'🕊', tavuk:'🐓', hindi:'🦃', kaz:'🪿', karisik:'🐦', bildircin:'🪶', keklik:'🦜', tavus:'🦚', diger:'🐾' }[t] || '🐾');
+const TL  = t  => ({ guvercin:'Güvercin', tavuk:'Tavuk', hindi:'Hindi', kaz:'Kaz/Ördek', karisik:'Karışık', bildircin:'Bıldırcın', keklik:'Keklik', tavus:'Tavus Kuşu', diger:'Diğer' }[t] || t);
 const kTot= k  => (k.irklar || []).reduce((s, r) => s + (r.erkek || 0) + (r.disi || 0), 0);
 function uid() { return 'x' + Math.random().toString(36).slice(2, 9); }
 
@@ -1460,7 +1464,7 @@ function rDash() {
   document.getElementById('dStats').innerHTML = html;
 
   // Tür kırılımı: sadece o türden kümes varsa göster
-  const turSira = ['tavuk','guvercin','hindi','kaz','bildircin','keklik','karisik','diger'];
+  const turSira = ['tavuk','guvercin','hindi','kaz','bildircin','keklik','tavus','karisik','diger'];
   const breakdownEl = document.getElementById('dTurBreakdown');
   if (breakdownEl) {
     let bH = '';
@@ -1569,6 +1573,30 @@ async function delUnite() {
   if (curTab==='anasayfa') rDash();
   toast('🗑 Ünite silindi');
 }
+
+// Hareket silme — adet otomatik geri alınır
+async function delUcHareket(uId, idx) {
+  const u = D.civcivUniteleri.find(x => x.id === uId); if (!u) return;
+  const hv = (u.hareketler||[])[idx]; if (!hv) return;
+  const aciklama = hv.islem==='ekle'
+    ? `+${hv.adet} adet ekleme kaydı silinecek.\nMevcut sayı ${hv.adet} azalacak.`
+    : `-${hv.adet} adet çıkarma kaydı silinecek.\nMevcut sayı ${hv.adet} artacak.`;
+  if (!confirm(`Bu hareketi silmek istiyor musunuz?\n\n${aciklama}`)) return;
+
+  // Adeti tersine çevir
+  if (hv.islem==='ekle') {
+    u.adet = Math.max(0, (u.adet||0) - hv.adet);
+  } else {
+    u.adet = (u.adet||0) + hv.adet;
+  }
+  // Hareketi listeden çıkar
+  u.hareketler.splice(idx, 1);
+
+  await dbUniteGuncelle(u);
+  rUniteContent(uId);
+  if (curTab==='anasayfa') rDash();
+  toast('🗑 Hareket silindi','ok');
+}
 // Civciv ünitesi tip yardımcıları
 function uniteTipL(t)  { return t==='yavru_guvercin' ? 'Yavru Güvercin' : 'Civciv'; }
 function uniteTipI(t)  { return t==='yavru_guvercin' ? '🐦' : '🐣'; }
@@ -1639,7 +1667,9 @@ function rUniteContent(id) {
   if (hvs.length) {
     h += '<div class="divlabel">Hareket Geçmişi</div>';
     const now = new Date();
-    hvs.forEach(hv => {
+    // Orijinal indeks bilgisini koruyarak son 10
+    const indexli = hvAll.map((hv,i)=>({hv,idx:i})).slice(-10).reverse();
+    indexli.forEach(({hv,idx}) => {
       // Bu partinin yaşı (sadece ekle hareketleri için)
       let yasRoz = '';
       if (hv.islem==='ekle' && hv.tarih) {
@@ -1659,6 +1689,9 @@ function rUniteContent(id) {
           <div class="fw f13 ${hv.islem==='ekle'?'cg':'cr'}">${hv.islem==='ekle'?'+':'-'}${hv.adet}</div>
           <div class="f11 c3">${fd(hv.tarih)}</div>
         </div>
+      </div>
+      <div style="text-align:right;margin-top:6px">
+        <button class="btn btn-d btn-sm" onclick="delUcHareket('${u.id}',${idx})" style="width:auto;padding:4px 10px;font-size:11px">🗑 Sil</button>
       </div></div>`;
     });
   } else h += '<div class="empty" style="padding:20px"><div class="et">Henüz hareket yok</div></div>';
@@ -1810,12 +1843,21 @@ async function delK(){
   await dbKumesSil(document.getElementById('kDId').value);
   closeM('mKDet');rKumesler();toast('🗑 Kümes silindi');
 }
-function openHA(){
+function openHA(islem){
   const id=document.getElementById('kDId').value;const k=D.kumesler.find(x=>x.id===id);if(!k)return;
+  islem = islem || 'ekle';
   document.getElementById('hE').value=0;document.getElementById('hD').value=0;
-  document.getElementById('hNot').value='';document.getElementById('hIslem').value='ekle';
-  document.getElementById('hDogum').value=td();document.getElementById('hDogumFG').style.display='block';
+  document.getElementById('hNot').value='';
+  document.getElementById('hIslem').value=islem;
+  document.getElementById('hDogum').value=td();
+  document.getElementById('hDogumFG').style.display = islem==='ekle' ? 'block' : 'none';
   document.getElementById('hIrk').innerHTML='<option value="">Genel (Tüm Kümes)</option>'+(k.irklar||[]).map(r=>`<option value="${r.id}">${r.ad}</option>`).join('');
+  // Modal başlığı
+  const titleEl = document.querySelector('#mHA .mt2');
+  if (titleEl) titleEl.textContent = islem==='ekle' ? '➕ Hayvan Ekle' : '➖ Hayvan Çıkar (Ölüm/Kayıp)';
+  // Çıkar modunda placeholder
+  const notEl = document.getElementById('hNot');
+  if (notEl) notEl.placeholder = islem==='ekle' ? 'Alım, doğum, açıklama...' : 'Ölüm sebebi, kayıp, hastalık...';
   openM('mHA');
 }
 async function saveHA(){
@@ -1825,12 +1867,27 @@ async function saveHA(){
   const not=document.getElementById('hNot').value.trim(),irkId=document.getElementById('hIrk').value;
   const dogumTarihi=islem==='ekle'?document.getElementById('hDogum').value:'';
   if(e+dv===0){alert('En az 1 hayvan girin!');return}
+
+  // Çıkar işleminde stok kontrolü
+  if (islem==='cikar') {
+    let mevcutE=0, mevcutD=0;
+    if (irkId) {
+      const irk = k.irklar.find(r => r.id===irkId);
+      if (irk) { mevcutE = irk.erkek||0; mevcutD = irk.disi||0; }
+    } else {
+      (k.irklar||[]).forEach(ir => { mevcutE += ir.erkek||0; mevcutD += ir.disi||0; });
+    }
+    if (e > mevcutE) { alert(`Yeterli erkek yok!\nMevcut: ${mevcutE}, Çıkarılmak istenen: ${e}`); return; }
+    if (dv > mevcutD) { alert(`Yeterli dişi yok!\nMevcut: ${mevcutD}, Çıkarılmak istenen: ${dv}`); return; }
+  }
+
   let irkAd='Genel';
   if(irkId){const irk=k.irklar.find(r=>r.id===irkId);if(irk){irkAd=irk.ad;if(islem==='ekle'){irk.erkek=(irk.erkek||0)+e;irk.disi=(irk.disi||0)+dv}else{irk.erkek=Math.max(0,(irk.erkek||0)-e);irk.disi=Math.max(0,(irk.disi||0)-dv)}}}
   else{if(!k.irklar||!k.irklar.length)k.irklar=[{id:uid(),ad:'Genel',erkek:0,disi:0}];const irk=k.irklar[0];irkAd=irk.ad;if(islem==='ekle'){irk.erkek=(irk.erkek||0)+e;irk.disi=(irk.disi||0)+dv}else{irk.erkek=Math.max(0,(irk.erkek||0)-e);irk.disi=Math.max(0,(irk.disi||0)-dv)}}
   k.hareketler=k.hareketler||[];k.hareketler.push({islem,erkek:e,disi:dv,not,tarih:td(),irkAd,dogumTarihi:dogumTarihi||null});
   await dbKumesGuncelle(k);
-  closeM('mHA');openKD(id);rKumesler();toast('✅ Güncellendi','ok');
+  closeM('mHA');openKD(id);rKumesler();
+  toast(islem==='ekle' ? `✅ ${e+dv} hayvan eklendi` : `➖ ${e+dv} hayvan çıkarıldı`, 'ok');
 }
 
 // ─── KULUÇKA ─────────────────────────────────────────────────
