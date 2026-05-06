@@ -529,11 +529,13 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <div class="hero"><div class="ph">Satışlar</div><div class="ps">Gelir kayıtları</div></div>
   <div class="sec">
     <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px">
-      <button class="btn btn-sm btn-p" id="sf-all" onclick="fSales('all')" style="width:auto;flex-shrink:0">Tümü</button>
-      <button class="btn btn-sm btn-s" id="sf-hayvan" onclick="fSales('hayvan')" style="flex-shrink:0">🐓 Hayvan</button>
-      <button class="btn btn-sm btn-s" id="sf-civciv" onclick="fSales('civciv')" style="flex-shrink:0">🐣 Civciv</button>
+      <button class="btn btn-sm btn-p" id="sf-all"     onclick="fSales('all')"     style="width:auto;flex-shrink:0">Tümü</button>
+      <button class="btn btn-sm btn-s" id="sf-hayvan"  onclick="fSales('hayvan')"  style="flex-shrink:0">🐓 Hayvan</button>
+      <button class="btn btn-sm btn-s" id="sf-civciv"  onclick="fSales('civciv')"  style="flex-shrink:0">🐣 Civciv</button>
       <button class="btn btn-sm btn-s" id="sf-yumurta" onclick="fSales('yumurta')" style="flex-shrink:0">🥚 Yumurta</button>
+      <button class="btn btn-sm btn-s" id="sf-diger"   onclick="fSales('diger')"   style="flex-shrink:0">📦 Diğer</button>
     </div>
+    <div id="sToplam" class="f12 c2 mb8" style="text-align:right;padding:0 4px"></div>
     <div id="sList"></div>
   </div>
   <button class="fab" onclick="openSM()">+</button>
@@ -557,6 +559,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
       <button class="btn btn-sm btn-s" id="gf-kumes"    onclick="fGid('kumes')"    style="flex-shrink:0">🏠 Kümes</button>
       <button class="btn btn-sm btn-s" id="gf-diger"    onclick="fGid('diger')"    style="flex-shrink:0">📦 Diğer</button>
     </div>
+    <div id="gToplam" class="f12 c2 mb8" style="text-align:right;padding:0 4px"></div>
     <div id="gList"></div>
   </div>
   <button class="fab" onclick="openGM()">+</button>
@@ -2022,13 +2025,61 @@ async function delKu(id){
 let sRows=[], sFilt='all';
 function rSatislar(f){
   if(f)sFilt=f;
-  ['all','hayvan','civciv','yumurta'].forEach(x=>{
+  ['all','hayvan','civciv','yumurta','diger'].forEach(x=>{
     const el=document.getElementById('sf-'+x);if(!el)return;
     const on=x===sFilt;el.className='btn btn-sm '+(on?'btn-p':'btn-s');el.style.width='auto';el.style.flexShrink='0';
   });
-  let filt=[...D.satislar];if(sFilt!=='all')filt=filt.filter(s=>s.urunler.some(u=>u.tip===sFilt));
+
+  // Filtreyi uygula
+  let filt = [...D.satislar];
+  if (sFilt !== 'all') {
+    filt = filt.filter(s => s.urunler.some(u => u.tip === sFilt));
+  }
+
+  // Kategori toplamı hesapla
+  const tipL = { hayvan:'🐓 Hayvan', civciv:'🐣 Civciv', yumurta:'🥚 Yumurta', diger:'📦 Diğer', all:'Tümü' };
+  let toplamTutar = 0, toplamAdet = 0, toplamOdenen = 0, toplamKalan = 0;
+
+  if (sFilt === 'all') {
+    // Hepsi: tüm satışların toplamları
+    filt.forEach(s => {
+      toplamTutar += s.toplam || 0;
+      const ode = s.odenen!=null ? s.odenen : s.toplam;
+      toplamOdenen += ode;
+      toplamKalan  += Math.max(0, (s.toplam||0) - ode);
+      s.urunler.forEach(u => toplamAdet += (u.adet||0));
+    });
+  } else {
+    // Filtreli: sadece bu tipteki ürünlerin toplamı
+    filt.forEach(s => {
+      s.urunler.forEach(u => {
+        if (u.tip === sFilt) {
+          const tutar = (u.adet||0) * (u.fiyat||0);
+          toplamTutar += tutar;
+          toplamAdet  += u.adet||0;
+        }
+      });
+    });
+  }
+
+  // Toplam etiketini doldur
+  const totalEl = document.getElementById('sToplam');
+  if (totalEl) {
+    if (filt.length === 0) {
+      totalEl.innerHTML = '';
+    } else if (sFilt === 'all') {
+      totalEl.innerHTML = `<strong>${filt.length}</strong> satış · <strong>${toplamAdet}</strong> ürün · <span class="cg fw">Toplam: ${fm(toplamTutar)}</span>${toplamKalan>0?` · <span class="cr">Kalan: ${fm(toplamKalan)}</span>`:''}`;
+    } else {
+      totalEl.innerHTML = `${tipL[sFilt]||sFilt}: <strong>${filt.length}</strong> satış · <strong>${toplamAdet}</strong> adet · <span class="cg fw">${fm(toplamTutar)}</span>`;
+    }
+  }
+
   let h='';
-  if(!filt.length)h='<div class="empty"><span class="ei">💰</span><div class="et">Satış bulunamadı</div></div>';
+  if(!filt.length){
+    h = sFilt==='all'
+      ? '<div class="empty"><span class="ei">💰</span><div class="et">Satış bulunamadı</div></div>'
+      : '<div class="empty"><span class="ei">💰</span><div class="et">Bu kategoride satış yok</div></div>';
+  }
   else filt.forEach(s=>{
     const sKalan = Math.max(0, (s.toplam||0) - (s.odenen!=null?s.odenen:s.toplam||0));
     h+=`<div class="stripe-card mb8">
@@ -2278,6 +2329,20 @@ function rFinans(){
 
   // Filtreyi uygula
   const filtered = curGFilter==='all' ? D.giderler : D.giderler.filter(g=>g.tur===curGFilter);
+
+  // Üst toplam etiketi
+  const gToplamEl = document.getElementById('gToplam');
+  if (gToplamEl) {
+    if (filtered.length === 0) {
+      gToplamEl.innerHTML = '';
+    } else {
+      const ftt    = filtered.reduce((s,g)=>s+(g.tutar||0),0);
+      const fOden  = filtered.reduce((s,g)=>s+(g.odenen!=null?g.odenen:g.tutar||0),0);
+      const fKalan = Math.max(0, ftt - fOden);
+      const lbl    = curGFilter==='all' ? 'Toplam' : (tL[curGFilter]||curGFilter);
+      gToplamEl.innerHTML = `${lbl}: <strong>${filtered.length}</strong> kayıt · <span class="cr fw">${fm(ftt)}</span>${fKalan>0?` · <span class="cr">Borç: ${fm(fKalan)}</span>`:''}`;
+    }
+  }
 
   const byT={};filtered.forEach(g=>{if(!byT[g.tur])byT[g.tur]=[];byT[g.tur].push(g)});
   let h='';
