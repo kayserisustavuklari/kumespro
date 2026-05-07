@@ -1162,14 +1162,14 @@ async function dbYukle() {
   D.satislar = (s.data || []).map(r => ({
     id: r.id, musteri: r.musteri, tarih: r.tarih,
     urunler: r.urunler || [], toplam: parseFloat(r.toplam) || 0,
-    odenen: parseFloat(r.odenen || r.odenen) || parseFloat(r.toplam) || 0,
+    odenen: r.odenen != null ? (parseFloat(r.odenen) || 0) : (parseFloat(r.toplam) || 0),
     kalan: parseFloat(r.kalan) || 0,
     not: r.not_
   }));
   D.giderler = (g.data || []).map(r => ({
     id: r.id, tur: r.tur, aciklama: r.aciklama,
     tutar: parseFloat(r.tutar) || 0, tarih: r.tarih, kumesId: r.kumes_id,
-    odenen: parseFloat(r.odenen || r.odenen) || parseFloat(r.tutar) || 0,
+    odenen: r.odenen != null ? (parseFloat(r.odenen) || 0) : (parseFloat(r.tutar) || 0),
     kalan: parseFloat(r.kalan) || 0
   }));
 }
@@ -1338,28 +1338,32 @@ async function dbUniteGuncelle(u) {
 // SATIŞ
 async function dbSatisEkle(s) {
   return dbSave(async () => {
+    const odenen = s.odenen != null ? parseFloat(s.odenen) || 0 : 0;
     const { data, error } = await sb.from('satislar').insert({
       user_id: currentUser.id, musteri: s.musteri || null, tarih: s.tarih,
       urunler: s.urunler || [], toplam: s.toplam || 0,
-      odenen: s.odenen || 0,
+      odenen: odenen,
       not_: s.not || null
     }).select().single();
     if (error) throw error;
     s.id = data.id;
-    s.kalan = s.toplam - (s.odenen || 0);
+    s.odenen = odenen;
+    s.kalan = Math.max(0, (s.toplam||0) - odenen);
     D.satislar.unshift(s);
   });
 }
 async function dbSatisGuncelle(s) {
   return dbSave(async () => {
+    const odenen = s.odenen != null ? parseFloat(s.odenen) || 0 : 0;
     const { error } = await sb.from('satislar').update({
       musteri: s.musteri || null, tarih: s.tarih,
       urunler: s.urunler || [], toplam: s.toplam || 0,
-      odenen: s.odenen || 0,
+      odenen: odenen,
       not_: s.not || null
     }).eq('id', s.id);
     if (error) throw error;
-    s.kalan = s.toplam - (s.odenen || 0);
+    s.odenen = odenen;
+    s.kalan = Math.max(0, (s.toplam||0) - odenen);
     const i = D.satislar.findIndex(x => x.id === s.id);
     if (i > -1) D.satislar[i] = s;
   });
@@ -1375,26 +1379,30 @@ async function dbSatisSil(id) {
 // GİDER
 async function dbGiderEkle(g) {
   return dbSave(async () => {
+    const odenen = g.odenen != null ? parseFloat(g.odenen) || 0 : 0;
     const { data, error } = await sb.from('giderler').insert({
       user_id: currentUser.id, tur: g.tur, aciklama: g.aciklama || null,
       tutar: g.tutar, tarih: g.tarih, kumes_id: g.kumesId || null,
-      odenen: g.odenen || 0
+      odenen: odenen
     }).select().single();
     if (error) throw error;
     g.id = data.id;
-    g.kalan = g.tutar - (g.odenen || 0);
+    g.odenen = odenen;
+    g.kalan = Math.max(0, (g.tutar||0) - odenen);
     D.giderler.unshift(g);
   });
 }
 async function dbGiderGuncelle(g) {
   return dbSave(async () => {
+    const odenen = g.odenen != null ? parseFloat(g.odenen) || 0 : 0;
     const { error } = await sb.from('giderler').update({
       tur: g.tur, aciklama: g.aciklama || null,
       tutar: g.tutar, tarih: g.tarih, kumes_id: g.kumesId || null,
-      odenen: g.odenen || 0
+      odenen: odenen
     }).eq('id', g.id);
     if (error) throw error;
-    g.kalan = g.tutar - (g.odenen || 0);
+    g.odenen = odenen;
+    g.kalan = Math.max(0, (g.tutar||0) - odenen);
     const i = D.giderler.findIndex(x => x.id === g.id);
     if (i > -1) D.giderler[i] = g;
   });
