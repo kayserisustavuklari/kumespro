@@ -898,6 +898,11 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <div class="mt2" id="mUCTitle">Civciv Ekle</div>
   <input type="hidden" id="ucIslemVal">
   <div class="fg"><label class="fl">Adet</label><input type="number" class="fi" id="ucAdet" value="1" min="1"></div>
+  <div class="fg" id="ucKaynakFG">
+    <label class="fl">🐓 Kaynak / Irk</label>
+    <input type="text" class="fi" id="ucKaynak" placeholder="Örn: Beyaz Tavuk, Frizyer Güvercin, A Kümesi...">
+    <div class="f11 c3 mt4">İsteğe bağlı — satışta hangi partiden düşeceğini belirler</div>
+  </div>
   <div class="fg" id="ucTarihFG">
     <label class="fl">📅 Çıkım / Giriş Tarihi</label>
     <input type="date" class="fi" id="ucTarih">
@@ -1154,13 +1159,53 @@ async function dbYukle() {
     const hr = r.hareketler || [];
     // Meta hareket varsa tip oradan al, yoksa civciv varsay
     const meta = hr.find(x => x && x._meta);
+    const filtered = hr.filter(x => !(x && x._meta));
+
+    // Migration: eski "ekle" hareketleri için partiId ve kalan oluştur
+    let needsMigrate = false;
+    filtered.forEach(h => {
+      if (h && h.islem==='ekle' && (!h.partiId || h.kalan == null)) {
+        h.partiId = h.partiId || ('p_' + Math.random().toString(36).slice(2,11));
+        h.kalan   = h.kalan   != null ? h.kalan : (h.adet || 0);
+        // Eski not'tan kaynak çıkar: "Kuluçka: X — Y" → kaynak = "Y"
+        if (!h.kaynak && h.not) {
+          const m = h.not.match(/—\s*(.+)$/);
+          h.kaynak = m ? m[1].trim() : 'Genel';
+        }
+        if (!h.kaynak) h.kaynak = 'Genel';
+        needsMigrate = true;
+      }
+    });
+
+    // Eski "cikar" hareketleri eski partilerden geriye düş (FIFO)
+    if (needsMigrate) {
+      const partiler = filtered.filter(h => h.islem==='ekle').sort((a,b)=>(a.tarih||'').localeCompare(b.tarih||''));
+      filtered.filter(h => h.islem==='cikar').forEach(c => {
+        let kal = c.adet || 0;
+        for (const p of partiler) {
+          if (kal <= 0) break;
+          const dus = Math.min(kal, p.kalan||0);
+          p.kalan -= dus;
+          kal -= dus;
+        }
+      });
+    }
+
     return {
       id: r.id, ad: r.ad,
-      tip: (meta && meta.tip) || 'civciv',  // 'civciv' veya 'yavru_guvercin'
+      tip: (meta && meta.tip) || 'civciv',
       adet: r.adet || 0,
-      hareketler: hr.filter(x => !(x && x._meta))  // meta'yı UI listesinden filtrele
+      hareketler: filtered,
+      _migrate: needsMigrate
     };
   });
+  // Migrate edilenleri DB'ye geri yaz
+  for (const u of D.civcivUniteleri) {
+    if (u._migrate) {
+      delete u._migrate;
+      try { await dbUniteGuncelle(u); } catch(e) { console.warn('[migration] ünite:', e); }
+    }
+  }
   D.satislar = (s.data || []).map(r => ({
     id: r.id, musteri: r.musteri, tarih: r.tarih,
     urunler: r.urunler || [], toplam: parseFloat(r.toplam) || 0,
@@ -1302,7 +1347,15 @@ async function saveYeniUnite() {
   const u = {
     ad, tip, adet,
     hareketler: adet > 0
-      ? [{ islem:'ekle', adet, tarih, not:'Başlangıç' }]
+      ? [{
+          islem:'ekle',
+          partiId: uid(),
+          adet,
+          kalan: adet,
+          kaynak: 'Başlangıç',
+          tarih,
+          not: 'Başlangıç'
+        }]
       : []
   };
 
@@ -1597,13 +1650,17 @@ async function delUcHareket(uId, idx) {
     : `-${hv.adet} adet çıkarma kaydı silinecek.\nMevcut sayı ${hv.adet} artacak.`;
   if (!confirm(`Bu hareketi silmek istiyor musunuz?\n\n${aciklama}`)) return;
 
-  // Adeti tersine çevir
   if (hv.islem==='ekle') {
+    // Ekleme silinince partiyi tamamen kaldır
     u.adet = Math.max(0, (u.adet||0) - hv.adet);
   } else {
+    // Çıkarma silinince ilgili partinin kalan'ını geri ekle
     u.adet = (u.adet||0) + hv.adet;
+    if (hv.partiId) {
+      const parti = (u.hareketler||[]).find(p => p.partiId===hv.partiId && p.islem==='ekle');
+      if (parti) parti.kalan = (parti.kalan||0) + hv.adet;
+    }
   }
-  // Hareketi listeden çıkar
   u.hareketler.splice(idx, 1);
 
   await dbUniteGuncelle(u);
@@ -1678,6 +1735,33 @@ function rUniteContent(id) {
     </div>
   </div>`;
 
+  // Aktif partiler — stoku olan
+  const aktifPartiler = hvAll.filter(h => h.islem==='ekle' && (h.kalan||0) > 0)
+                              .sort((a,b)=>(a.tarih||'').localeCompare(b.tarih||''));
+  if (aktifPartiler.length > 0) {
+    h += '<div class="divlabel">📦 Aktif Partiler</div>';
+    const now = new Date();
+    aktifPartiler.forEach(p => {
+      const yas = p.tarih ? Math.max(0, Math.floor((now - new Date(p.tarih+'T00:00:00'))/86400000)) : null;
+      const oran = p.adet > 0 ? Math.round((p.kalan/p.adet)*100) : 0;
+      h += `<div class="card mb8" style="padding:10px">
+        <div class="row mb4">
+          <div>
+            <div class="f12 fw">🐓 ${p.kaynak || 'Genel'}</div>
+            <div class="f11 c3 mt4">📅 ${fd(p.tarih)}${yas!=null?' · ⏱ '+gunStr(yas):''}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="f13 fw cg">${p.kalan}</div>
+            <div class="f10 c3">/${p.adet}</div>
+          </div>
+        </div>
+        <div style="background:var(--gray-xx);height:6px;border-radius:3px;overflow:hidden">
+          <div style="background:linear-gradient(90deg,var(--green),#7CB342);height:100%;width:${oran}%"></div>
+        </div>
+      </div>`;
+    });
+  }
+
   if (hvs.length) {
     h += '<div class="divlabel">Hareket Geçmişi</div>';
     const now = new Date();
@@ -1722,8 +1806,10 @@ function ucIslem(islem) {
   document.getElementById('mUCTitle').textContent = islem==='ekle' ? `${tipIc} ${tipAd} Ekle` : `📦 ${tipAd} Çıkar`;
   document.getElementById('ucAdet').value = 1;
   document.getElementById('ucNot').value = '';
+  document.getElementById('ucKaynak').value = '';
   document.getElementById('ucTarih').value = td();
-  document.getElementById('ucTarihFG').style.display = islem==='ekle' ? 'block' : 'none';
+  document.getElementById('ucTarihFG').style.display   = islem==='ekle' ? 'block' : 'none';
+  document.getElementById('ucKaynakFG').style.display  = islem==='ekle' ? 'block' : 'none';
   openM('mUC');
 }
 async function saveUC() {
@@ -1735,9 +1821,35 @@ async function saveUC() {
   const tarih = (islem==='ekle' && document.getElementById('ucTarih').value) || td();
   if (!adet || adet < 1) { alert('Geçerli adet girin!'); return; }
   if (islem==='cikar' && adet > (u.adet||0)) { alert('Ünitede yeterli civciv yok!'); return; }
-  u.adet = (u.adet||0) + (islem==='ekle' ? adet : -adet);
+
   u.hareketler = u.hareketler || [];
-  u.hareketler.push({ islem, adet, not, tarih });
+  if (islem === 'ekle') {
+    const kaynak = document.getElementById('ucKaynak').value.trim() || 'Genel';
+    // Yeni parti oluştur
+    u.hareketler.push({
+      islem: 'ekle',
+      partiId: uid(),
+      adet,
+      kalan: adet,
+      kaynak,
+      not,
+      tarih
+    });
+    u.adet = (u.adet||0) + adet;
+  } else {
+    // Manuel çıkar — partileri seçmeden eşit dağıtmak yerine FIFO (en eski partiden) düş
+    let kal = adet;
+    const partiler = u.hareketler.filter(h => h.islem==='ekle' && (h.kalan||0) > 0)
+      .sort((a,b) => (a.tarih||'').localeCompare(b.tarih||''));
+    for (const p of partiler) {
+      if (kal <= 0) break;
+      const dus = Math.min(kal, p.kalan);
+      p.kalan -= dus;
+      kal -= dus;
+    }
+    u.hareketler.push({ islem:'cikar', adet, not, tarih });
+    u.adet = Math.max(0, (u.adet||0) - adet);
+  }
   await dbUniteGuncelle(u);
   closeM('mUC'); rUniteContent(id);
   if (curTab==='anasayfa') rDash();
@@ -2023,6 +2135,7 @@ function openCik(id){
     [{ id:'genel', adet: k.toplamYumurta || 0, kumesId:null, aciklama:'Genel' }];
   cikRows = kaynaklar.map(r => ({
     kaynakId: r.id,
+    kumesId:  r.kumesId || null,
     ad:       r.aciklama || (D.kumesler.find(x=>x.id===r.kumesId)?.ad) || 'Kaynak',
     yumurta:  r.adet || 0,
     civciv:   0, olu: 0, bos: 0
@@ -2145,12 +2258,16 @@ async function saveCik(){
   if(u && tC > 0){
     u.adet=(u.adet||0)+tC;
     u.hareketler=u.hareketler||[];
-    // Her kaynak için ayrı hareket kaydı oluştur (yaş + parti takibi için)
+    // Her kaynak için ayrı parti oluştur (parti = baslangicAdet + kalan)
     cikRows.forEach(r => {
       if ((r.civciv||0) > 0) {
         u.hareketler.push({
           islem:'ekle',
-          adet: r.civciv,
+          partiId: uid(),                          // benzersiz parti
+          adet: r.civciv,                          // başlangıç adeti
+          kalan: r.civciv,                         // kalan (satışla azalır)
+          kaynak: r.ad,                            // ırk / kümes adı
+          kaynakKumesId: r.kumesId || null,
           not:  `Kuluçka: ${k.ad} — ${r.ad}`,
           tarih
         });
@@ -2304,10 +2421,30 @@ function rSRows(){
         <option value="yumurta" ${r.tip==='yumurta'?'selected':''}>🥚 Yumurta</option>
         <option value="diger" ${r.tip==='diger'?'selected':''}>📦 Diğer</option>
       </select>`;
+    // Civciv için: ünite + parti dropdown'ları
+    let civcivControls = '';
+    if (r.tip === 'civciv') {
+      const u = D.civcivUniteleri.find(x => x.id === r.uniteId);
+      const partiler = u ? (u.hareketler||[]).filter(h => h.islem==='ekle' && (h.kalan||0) > 0)
+                                              .sort((a,b)=>(a.tarih||'').localeCompare(b.tarih||''))
+                          : [];
+      civcivControls = `
+        <select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].uniteId=this.value;sRows[${i}].partiId='';rSRows()">
+          ${D.civcivUniteleri.map(x=>`<option value="${x.id}" ${x.id===r.uniteId?'selected':''}>${uniteTipI(x.tip||'civciv')} ${x.ad} (${x.adet})</option>`).join('')}
+        </select>
+        <select class="fs" style="flex:1;min-width:140px;width:100%" onchange="sRows[${i}].partiId=this.value;rSRows()">
+          <option value="">-- Parti seçin --</option>
+          ${partiler.map(p => {
+            const yas = p.tarih ? Math.max(0, Math.floor((new Date() - new Date(p.tarih+'T00:00:00'))/86400000)) : null;
+            return `<option value="${p.partiId}" ${p.partiId===r.partiId?'selected':''}>${p.kaynak||'Genel'} · ${p.kalan} adet${yas!=null?' · '+gunStr(yas):''}</option>`;
+          }).join('')}
+        </select>`;
+    }
+
     const kaynakSelect = r.tip==='hayvan'
       ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].kumesId=this.value;sRows[${i}].erkekAdet=0;sRows[${i}].disiAdet=0;rSRows()">${D.kumesler.map(k=>`<option value="${k.id}" ${k.id===r.kumesId?'selected':''}>${k.ad}</option>`).join('')}</select>`
       : r.tip==='civciv'
-      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].uniteId=this.value;rSRows()">${D.civcivUniteleri.map(u=>`<option value="${u.id}" ${u.id===r.uniteId?'selected':''}>${uniteTipI(u.tip||'civciv')} ${u.ad} (${u.adet})</option>`).join('')}</select>`
+      ? civcivControls
       : `<input class="fi" placeholder="Ürün adı" value="${r.ad||''}" style="flex:1" oninput="sRows[${i}].ad=this.value">`;
 
     // Hayvan satışı: erkek/dişi ayrı inputlar
@@ -2343,18 +2480,34 @@ function rSRows(){
         ${stokBilgi}
       `;
     } else if (r.tip === 'civciv') {
-      // Civciv satışı: ünitedeki stok kontrolü
+      // Civciv satışı: SEÇİLEN PARTİDEKİ stok kontrolü
       const u = D.civcivUniteleri.find(x => x.id === r.uniteId);
-      const stok  = u ? (u.adet||0) : 0;
       const tipAd = u ? uniteTipL(u.tip||'civciv') : 'Civciv';
       const tipIc = u ? uniteTipI(u.tip||'civciv') : '🐣';
-      const stokBilgi = u ? `<div class="f11 c2" style="width:100%;margin-top:4px">
-        Stok: <span class="b bg">${tipIc} ${stok}</span>
-        ${stok===0?'<span style="color:var(--red);margin-left:6px">⚠️ Stok yok!</span>':''}
-      </div>` : '';
+      let parti = null;
+      if (u && r.partiId) {
+        parti = (u.hareketler||[]).find(h => h.partiId===r.partiId);
+      }
+      const stok = parti ? (parti.kalan||0) : 0;
+
+      let stokBilgi;
+      if (!r.partiId) {
+        stokBilgi = `<div class="f11 c2" style="width:100%;margin-top:4px;color:var(--ora)">
+          ℹ️ Lütfen yukarıdan bir parti seçin
+        </div>`;
+      } else if (parti) {
+        const yas = parti.tarih ? Math.max(0, Math.floor((new Date() - new Date(parti.tarih+'T00:00:00'))/86400000)) : null;
+        stokBilgi = `<div class="f11 c2" style="width:100%;margin-top:4px">
+          Parti: <strong>${parti.kaynak||'Genel'}</strong> · ${tipIc} ${stok} kaldı${yas!=null?' · ⏱ '+gunStr(yas):''}
+          ${stok===0?'<span style="color:var(--red);margin-left:6px">⚠️ Stok bitti!</span>':''}
+        </div>`;
+      } else {
+        stokBilgi = '';
+      }
+
       adetBlok = `
         <div style="display:flex;gap:6px;width:100%">
-          <input class="fi" type="number" placeholder="Adet" value="${r.adet||''}" style="flex:1" min="1" max="${stok}"
+          <input class="fi" type="number" placeholder="Adet" value="${r.adet||''}" style="flex:1" min="1" max="${stok}" ${!parti?'disabled':''}
             oninput="sRows[${i}].adet=Math.min(${stok},parseInt(this.value)||0);calcSTop()">
           <input class="fi" type="number" placeholder="₺ Fiyat" value="${r.fiyat||''}" style="flex:1" min="0" step="0.01" oninput="sRows[${i}].fiyat=parseFloat(this.value)||0;calcSTop()">
           <button class="btn btn-d btn-sm" onclick="remSR(${i})" style="padding:8px 10px;flex-shrink:0">✕</button>
@@ -2385,8 +2538,8 @@ function rSRows(){
   }).join('');
   calcSTop();
 }
-function onSTC(i,v){sRows[i].tip=v;sRows[i].kumesId=D.kumesler[0]?.id||'';sRows[i].uniteId=D.civcivUniteleri[0]?.id||'';sRows[i].erkekAdet=0;sRows[i].disiAdet=0;sRows[i].adet=0;rSRows()}
-function addSR(){sRows.push({tip:'hayvan',kumesId:D.kumesler[0]?.id||'',uniteId:D.civcivUniteleri[0]?.id||'',adet:0,erkekAdet:0,disiAdet:0,fiyat:0,ad:''});rSRows()}
+function onSTC(i,v){sRows[i].tip=v;sRows[i].kumesId=D.kumesler[0]?.id||'';sRows[i].uniteId=D.civcivUniteleri[0]?.id||'';sRows[i].partiId='';sRows[i].erkekAdet=0;sRows[i].disiAdet=0;sRows[i].adet=0;rSRows()}
+function addSR(){sRows.push({tip:'hayvan',kumesId:D.kumesler[0]?.id||'',uniteId:D.civcivUniteleri[0]?.id||'',partiId:'',adet:0,erkekAdet:0,disiAdet:0,fiyat:0,ad:''});rSRows()}
 function remSR(i){sRows.splice(i,1);rSRows()}
 
 // ─── ÖDEME HESAPLAMA ─────────────────────────────────────────
@@ -2425,8 +2578,14 @@ async function saveSat(){
       if(!r.adet||!r.fiyat){alert('Tüm ürünler için adet ve fiyat girin!');return}
       const u = D.civcivUniteleri.find(x=>x.id===r.uniteId);
       if (!u) { alert('Civciv ünitesi bulunamadı!'); return; }
-      if (r.adet > (u.adet||0)) {
-        alert(`"${u.ad}" ünitesinde yeterli ${uniteTipL(u.tip||'civciv').toLowerCase()} yok!\nMevcut: ${u.adet}, Satılmak istenen: ${r.adet}`);
+      if (!r.partiId) {
+        alert(`"${u.ad}" ünitesinden bir parti seçmelisiniz!`);
+        return;
+      }
+      const parti = (u.hareketler||[]).find(h => h.partiId===r.partiId);
+      if (!parti) { alert('Seçilen parti bulunamadı!'); return; }
+      if (r.adet > (parti.kalan||0)) {
+        alert(`"${parti.kaynak||'parti'}" partisinde yeterli ${uniteTipL(u.tip||'civciv').toLowerCase()} yok!\nKalan: ${parti.kalan}, Satılmak istenen: ${r.adet}`);
         return;
       }
     } else {
@@ -2462,9 +2621,23 @@ async function saveSat(){
         k.hareketler.push({islem:'cikar',erkek:r.erkekAdet||0,disi:r.disiAdet||0,not:'Satış: '+(mus||'Anonim'),tarih,irkAd:'Genel'});
       }
     }
-    else if(r.tip==='civciv'&&r.uniteId){
-      const u=D.civcivUniteleri.find(x=>x.id===r.uniteId);
-      if(u){u.adet=Math.max(0,(u.adet||0)-r.adet);u.hareketler=u.hareketler||[];u.hareketler.push({islem:'cikar',adet:r.adet,not:'Satış: '+(mus||'Anonim'),tarih})}
+    else if(r.tip==='civciv' && r.uniteId && r.partiId){
+      const u = D.civcivUniteleri.find(x=>x.id===r.uniteId);
+      if (u) {
+        const parti = (u.hareketler||[]).find(h => h.partiId===r.partiId);
+        if (parti) {
+          parti.kalan = Math.max(0, (parti.kalan||0) - r.adet);
+        }
+        u.adet = Math.max(0, (u.adet||0) - r.adet);
+        u.hareketler = u.hareketler || [];
+        u.hareketler.push({
+          islem:'cikar', adet:r.adet,
+          partiId: r.partiId,
+          kaynak: parti ? parti.kaynak : 'Genel',
+          not: 'Satış: ' + (mus||'Anonim'),
+          tarih
+        });
+      }
     }
   });
   // Stok kaydet
