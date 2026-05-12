@@ -853,20 +853,19 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
 <div class="mo" id="mCik"><div class="modal">
   <div class="mt2">Çıkım Sonuçları 🐣</div>
   <input type="hidden" id="cikId">
-  <div class="al al-s" id="cikInfo"></div>
-  <div class="fr" style="margin-bottom:4px;padding:0 2px">
-    <div style="flex:2;font-size:11px;color:var(--c2)">Kaynak</div>
-    <div style="flex:1;font-size:11px;color:var(--c2);text-align:center">🐣 Çıkan</div>
-    <div style="flex:1;font-size:11px;color:var(--c2);text-align:center">🥚 Boş</div>
-    <div style="flex:1;font-size:11px;color:var(--c2);text-align:center">💀 Ölü</div>
-  </div>
-  <div id="cikSonuclar"></div>
-  <div id="cikToplam" class="al al-s" style="text-align:right;font-size:12px;margin-bottom:8px"></div>
-  <div class="fr">
-    <div class="fg"><label class="fl">📅 Tarih</label><input type="date" class="fi" id="cT"></div>
+  <div class="al al-s" id="cikInfo">Civcivler seçilen üniteye aktarılacak.</div>
+
+  <!-- Her kaynak için ayrı satırlar buraya doldurulur -->
+  <div id="cikKaynaklar"></div>
+
+  <!-- Toplam özet -->
+  <div id="cikOzet" class="card" style="background:var(--gr-l);padding:10px;margin-top:10px;font-size:12px"></div>
+
+  <div class="fg" style="margin-top:14px"><label class="fl">📅 Çıkım Tarihi</label>
+    <input type="date" class="fi" id="cT">
   </div>
   <div class="fg">
-    <label class="fl">Hedef Ünite</label>
+    <label class="fl">Hedef Ünite (toplam çıkan civciv buraya aktarılır)</label>
     <div style="display:flex;gap:6px">
       <select class="fs" id="cU" style="flex:1"></select>
       <button class="btn btn-s btn-sm" onclick="openYeniUniteFromCikim()" style="width:auto;padding:8px 12px;flex-shrink:0">+ Yeni</button>
@@ -1961,13 +1960,14 @@ function kuCard(k){
     <div class="${done?'f12 c2':'hs'}">🥚 Toplam ${topY} yumurta</div>
     ${kayStr?`<div class="${done?'f11 c3':'hd'} mt4">${kayStr}</div>`:''}
     ${!done?`<div class="hbar"><div class="hfill" style="width:${pct}%"></div></div><div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div>`:''}
-    ${done&&k.cikim?(()=>{
-      const civTot=k.cikim.sonuclar?k.cikim.sonuclar.reduce((s,r)=>s+r.civciv,0):k.cikim.civciv;
-      const bosTot=k.cikim.sonuclar?k.cikim.sonuclar.reduce((s,r)=>s+r.bos,0):k.cikim.bos;
-      const oluTot=k.cikim.sonuclar?k.cikim.sonuclar.reduce((s,r)=>s+r.olu,0):k.cikim.olu;
-      const detay=(k.cikim.sonuclar&&(k.kaynaklar||[]).length>1)?`<div class="f11 c3 mt4">`+(k.kaynaklar.map((r,i)=>{const s=k.cikim.sonuclar[i]||{civciv:0,bos:0,olu:0};const km=D.kumesler?.find(x=>x.id===r.kumesId);const lbl=r.aciklama||km?.ad||'Kaynak '+(i+1);return`${lbl}: 🐣${s.civciv} 🥚${s.bos} 💀${s.olu}`}).join(' · '))+`</div>`:'';
-      return`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="b bg">🐣 ${civTot} çıktı</span><span class="b br">🥚 ${bosTot} boş</span><span class="b bs">💀 ${oluTot} ölü</span>${topY>0?`<span class="b bw">%${Math.round(civTot/topY*100)} verim</span>`:''}</div>${detay}`;
-    })():''}
+    ${done&&k.cikim?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+      <span class="b bg">🐣 ${k.cikim.civciv} çıktı</span><span class="b br">🥚 ${k.cikim.bos} boş</span>
+      <span class="b bs">💀 ${k.cikim.olu} ölü</span>${topY>0?`<span class="b bw">%${Math.round(k.cikim.civciv/topY*100)} verim</span>`:''}
+    </div>${k.cikim.kaynaklar && k.cikim.kaynaklar.length > 1 ? `
+    <div class="f11 c3 mt8" style="background:var(--gray-xx);border-radius:6px;padding:6px 8px;line-height:1.6">
+      <div class="fw mb4">Kaynak dağılımı:</div>
+      ${k.cikim.kaynaklar.map(cr => `<div>• ${cr.ad}: <span class="cg fw">${cr.civciv}</span> çıkan / <span class="cr">${cr.olu}</span> ölü / ${cr.bos} boş <span class="c3">(${cr.yumurta} yumurta)</span></div>`).join('')}
+    </div>` : ''}`:''}
     ${!done?`<div style="display:flex;gap:8px;margin-top:10px">
       <button class="btn btn-g btn-sm" style="flex:1;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)" onclick="openCik('${k.id}')">🐣 Çıkım Gir</button>
       <button class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.2)" onclick="openKuEdit('${k.id}')">✏️</button>
@@ -2009,42 +2009,160 @@ async function saveKu(){
   closeM('mKu');rKuluckalar();if(curTab==='anasayfa')rDash();
   toast('✅ Kuluçka kaydedildi','ok');
 }
-function calcCikToplam(){
-  const cont=document.getElementById('cikSonuclar');if(!cont)return;
-  const rows=cont.querySelectorAll('.cik-row').length;
-  let tC=0,tB=0,tO=0;
-  for(let i=0;i<rows;i++){tC+=parseInt(document.getElementById('cCiv'+i)?.value)||0;tB+=parseInt(document.getElementById('cBos'+i)?.value)||0;tO+=parseInt(document.getElementById('cOlu'+i)?.value)||0;}
-  document.getElementById('cikToplam').textContent=`Toplam: 🐣 ${tC} çıktı · 🥚 ${tB} boş · 💀 ${tO} ölü`;
-}
+// Çıkım için state: her kaynak için { civciv, olu, bos }
+let cikRows = [];
+
 function openCik(id){
   const k=D.kuluckalar.find(x=>x.id===id);if(!k)return;
   document.getElementById('cikId').value=id;
-  document.getElementById('cT').value=td();document.getElementById('cNot').value='';
-  const topY=(k.kaynaklar||[]).reduce((s,r)=>s+(r.adet||0),0)||k.toplamYumurta||0;
-  document.getElementById('cikInfo').textContent=`Bu kuluçkada toplam ${topY} yumurta var. Her kaynak için çıkım girin.`;
-  const kaynaklar=(k.kaynaklar&&k.kaynaklar.length)?k.kaynaklar:[{id:'tek',adet:topY,aciklama:''}];
-  document.getElementById('cikSonuclar').innerHTML=kaynaklar.map((r,i)=>{
-    const km=D.kumesler?D.kumesler.find(x=>x.id===r.kumesId):null;
-    const lbl=r.aciklama||km?.ad||'Kaynak '+(i+1);
-    return`<div class="cik-row fr" style="margin-bottom:6px;align-items:center"><div style="flex:2;font-size:12px;padding:4px 2px">${lbl}<br><span style="font-size:10px;color:var(--c3)">${r.adet} yumurta</span></div><div style="flex:1"><input type="number" class="fi" id="cCiv${i}" value="0" min="0" oninput="calcCikToplam()" style="text-align:center;padding:6px 4px"></div><div style="flex:1"><input type="number" class="fi" id="cBos${i}" value="0" min="0" oninput="calcCikToplam()" style="text-align:center;padding:6px 4px"></div><div style="flex:1"><input type="number" class="fi" id="cOlu${i}" value="0" min="0" oninput="calcCikToplam()" style="text-align:center;padding:6px 4px"></div></div>`;
-  }).join('');
-  calcCikToplam();
+  document.getElementById('cT').value=td();
+  document.getElementById('cNot').value='';
+
+  // Önce kaynaklara göre cikRows hazırla
+  const kaynaklar = k.kaynaklar && k.kaynaklar.length ? k.kaynaklar :
+    [{ id:'genel', adet: k.toplamYumurta || 0, kumesId:null, aciklama:'Genel' }];
+  cikRows = kaynaklar.map(r => ({
+    kaynakId: r.id,
+    ad:       r.aciklama || (D.kumesler.find(x=>x.id===r.kumesId)?.ad) || 'Kaynak',
+    yumurta:  r.adet || 0,
+    civciv:   0, olu: 0, bos: 0
+  }));
+
+  const topY = kaynaklar.reduce((s,r)=>s+(r.adet||0),0);
+  document.getElementById('cikInfo').innerHTML =
+    `Bu kuluçkada <strong>${kaynaklar.length}</strong> kaynak, toplam <strong>${topY}</strong> yumurta var. Her kaynak için sonucu ayrı girin.`;
+
+  // Eski reload edilen durum
+  if (k.cikim && k.cikim.kaynaklar) {
+    k.cikim.kaynaklar.forEach((cr,i) => {
+      if (cikRows[i]) {
+        cikRows[i].civciv = cr.civciv || 0;
+        cikRows[i].olu    = cr.olu    || 0;
+        cikRows[i].bos    = cr.bos    || 0;
+      }
+    });
+    if (k.cikim.tarih) document.getElementById('cT').value = k.cikim.tarih;
+    if (k.cikim.not)   document.getElementById('cNot').value = k.cikim.not;
+  }
+
   document.getElementById('cU').innerHTML=D.civcivUniteleri.map(u=>`<option value="${u.id}">${uniteTipI(u.tip||'civciv')} ${u.ad} (${u.adet})</option>`).join('');
+  rCikRows();
   openM('mCik');
 }
+
+function rCikRows() {
+  const el = document.getElementById('cikKaynaklar');
+  if (!el) return;
+  el.innerHTML = cikRows.map((r,i) => {
+    const toplam = (r.civciv||0) + (r.olu||0) + (r.bos||0);
+    const fark   = (r.yumurta||0) - toplam;
+    const farkH  = fark !== 0
+      ? `<span style="color:${fark>0?'#E65100':'var(--red)'};font-weight:700">${fark>0?'+':''}${fark} yumurta farkı</span>`
+      : '<span class="cg" style="font-weight:700">✓ Tamam</span>';
+    return `
+      <div class="card mb8" style="padding:10px">
+        <div class="row mb8">
+          <span class="f12 fw">🥚 ${r.ad}</span>
+          <span class="b bw">${r.yumurta} yumurta</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+          <div>
+            <div class="f10 c2 fw" style="text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">✅ Çıkan</div>
+            <input class="fi" type="number" min="0" max="${r.yumurta}" value="${r.civciv||0}"
+              oninput="cikRows[${i}].civciv=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
+          </div>
+          <div>
+            <div class="f10 c2 fw" style="text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">💀 Ölü</div>
+            <input class="fi" type="number" min="0" max="${r.yumurta}" value="${r.olu||0}"
+              oninput="cikRows[${i}].olu=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
+          </div>
+          <div>
+            <div class="f10 c2 fw" style="text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">🥚 Boş</div>
+            <input class="fi" type="number" min="0" max="${r.yumurta}" value="${r.bos||0}"
+              oninput="cikRows[${i}].bos=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
+          </div>
+        </div>
+        <div class="f11" style="text-align:right;margin-top:6px">Toplam: ${toplam}/${r.yumurta} · ${farkH}</div>
+      </div>`;
+  }).join('');
+  rCikOzet();
+}
+
+function rCikOzet() {
+  // satır içi rakam güncellemesi
+  document.querySelectorAll('#cikKaynaklar .card').forEach((card,i) => {
+    const r = cikRows[i]; if(!r) return;
+    const toplam = (r.civciv||0) + (r.olu||0) + (r.bos||0);
+    const fark   = (r.yumurta||0) - toplam;
+    const lastDiv = card.querySelector('.f11');
+    if (lastDiv) {
+      const farkH = fark !== 0
+        ? `<span style="color:${fark>0?'#E65100':'var(--red)'};font-weight:700">${fark>0?'+':''}${fark} yumurta farkı</span>`
+        : '<span class="cg" style="font-weight:700">✓ Tamam</span>';
+      lastDiv.innerHTML = `Toplam: ${toplam}/${r.yumurta} · ${farkH}`;
+    }
+  });
+
+  // Genel toplam özet
+  let tY = 0, tC = 0, tO = 0, tB = 0;
+  cikRows.forEach(r => { tY += r.yumurta||0; tC += r.civciv||0; tO += r.olu||0; tB += r.bos||0; });
+  const ozetEl = document.getElementById('cikOzet');
+  if (ozetEl) {
+    const oran = tY > 0 ? Math.round((tC/tY)*100) : 0;
+    ozetEl.innerHTML = `
+      <div class="fw mb4">📊 Genel Toplam</div>
+      <div class="row"><span>🥚 Yumurta:</span><strong>${tY}</strong></div>
+      <div class="row"><span>✅ Çıkan civciv:</span><strong class="cg">${tC} (%${oran})</strong></div>
+      <div class="row"><span>💀 Ölü:</span><strong class="cr">${tO}</strong></div>
+      <div class="row"><span>🥚 Boş:</span><strong>${tB}</strong></div>
+    `;
+  }
+}
 async function saveCik(){
-  const id=document.getElementById('cikId').value;const k=D.kuluckalar.find(x=>x.id===id);if(!k)return;
-  const kaynaklar=(k.kaynaklar&&k.kaynaklar.length)?k.kaynaklar:[null];
-  const sonuclar=kaynaklar.map((_,i)=>({civciv:parseInt(document.getElementById('cCiv'+i)?.value)||0,bos:parseInt(document.getElementById('cBos'+i)?.value)||0,olu:parseInt(document.getElementById('cOlu'+i)?.value)||0}));
-  const topCivciv=sonuclar.reduce((s,r)=>s+r.civciv,0);
+  const id=document.getElementById('cikId').value;
+  const k=D.kuluckalar.find(x=>x.id===id);if(!k)return;
+
+  // Toplam çıkan civciv
+  const tC = cikRows.reduce((s,r)=>s+(r.civciv||0),0);
+  const tO = cikRows.reduce((s,r)=>s+(r.olu||0),0);
+  const tB = cikRows.reduce((s,r)=>s+(r.bos||0),0);
+  const tarih = document.getElementById('cT').value || td();
+  const not   = document.getElementById('cNot').value || '';
+
   k.durum='tamamlandi';
-  k.cikim={tarih:document.getElementById('cT').value,not:document.getElementById('cNot').value,sonuclar};
+  k.cikim = {
+    civciv: tC, olu: tO, bos: tB,
+    tarih, not,
+    kaynaklar: cikRows.map(r => ({
+      kaynakId: r.kaynakId, ad: r.ad, yumurta: r.yumurta,
+      civciv: r.civciv||0, olu: r.olu||0, bos: r.bos||0
+    }))
+  };
+
   const uniteId=document.getElementById('cU').value;
   const u=D.civcivUniteleri.find(x=>x.id===uniteId);
-  if(u){u.adet=(u.adet||0)+topCivciv;u.hareketler=u.hareketler||[];u.hareketler.push({islem:'ekle',adet:topCivciv,not:'Kuluçka: '+k.ad,tarih:k.cikim.tarih});await dbUniteGuncelle(u)}
+  if(u && tC > 0){
+    u.adet=(u.adet||0)+tC;
+    u.hareketler=u.hareketler||[];
+    // Her kaynak için ayrı hareket kaydı oluştur (yaş + parti takibi için)
+    cikRows.forEach(r => {
+      if ((r.civciv||0) > 0) {
+        u.hareketler.push({
+          islem:'ekle',
+          adet: r.civciv,
+          not:  `Kuluçka: ${k.ad} — ${r.ad}`,
+          tarih
+        });
+      }
+    });
+    await dbUniteGuncelle(u);
+  }
   await dbKuluckaGuncelle(k);
-  closeM('mCik');rKuluckalar();if(curTab==='anasayfa')rDash();
-  alert('✅ '+topCivciv+' civciv "'+(u?u.ad:'ünite')+'"ye aktarıldı!');
+  closeM('mCik');
+  rKuluckalar();
+  if(curTab==='anasayfa')rDash();
+  alert(`✅ Toplam ${tC} civciv "${u?u.ad:'ünite'}"ye aktarıldı!\n\n` +
+        cikRows.filter(r=>r.civciv>0).map(r=>`• ${r.ad}: ${r.civciv} civciv`).join('\n'));
 }
 async function delKu(id){
   if(!confirm('Kaydı silmek istiyor musunuz?'))return;
@@ -2188,7 +2306,7 @@ function rSRows(){
     const kaynakSelect = r.tip==='hayvan'
       ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].kumesId=this.value;sRows[${i}].erkekAdet=0;sRows[${i}].disiAdet=0;rSRows()">${D.kumesler.map(k=>`<option value="${k.id}" ${k.id===r.kumesId?'selected':''}>${k.ad}</option>`).join('')}</select>`
       : r.tip==='civciv'
-      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].uniteId=this.value">${D.civcivUniteleri.map(u=>`<option value="${u.id}" ${u.id===r.uniteId?'selected':''}>${u.ad}(${u.adet})</option>`).join('')}</select>`
+      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].uniteId=this.value;rSRows()">${D.civcivUniteleri.map(u=>`<option value="${u.id}" ${u.id===r.uniteId?'selected':''}>${uniteTipI(u.tip||'civciv')} ${u.ad} (${u.adet})</option>`).join('')}</select>`
       : `<input class="fi" placeholder="Ürün adı" value="${r.ad||''}" style="flex:1" oninput="sRows[${i}].ad=this.value">`;
 
     // Hayvan satışı: erkek/dişi ayrı inputlar
@@ -2223,8 +2341,27 @@ function rSRows(){
         </div>
         ${stokBilgi}
       `;
+    } else if (r.tip === 'civciv') {
+      // Civciv satışı: ünitedeki stok kontrolü
+      const u = D.civcivUniteleri.find(x => x.id === r.uniteId);
+      const stok  = u ? (u.adet||0) : 0;
+      const tipAd = u ? uniteTipL(u.tip||'civciv') : 'Civciv';
+      const tipIc = u ? uniteTipI(u.tip||'civciv') : '🐣';
+      const stokBilgi = u ? `<div class="f11 c2" style="width:100%;margin-top:4px">
+        Stok: <span class="b bg">${tipIc} ${stok}</span>
+        ${stok===0?'<span style="color:var(--red);margin-left:6px">⚠️ Stok yok!</span>':''}
+      </div>` : '';
+      adetBlok = `
+        <div style="display:flex;gap:6px;width:100%">
+          <input class="fi" type="number" placeholder="Adet" value="${r.adet||''}" style="flex:1" min="1" max="${stok}"
+            oninput="sRows[${i}].adet=Math.min(${stok},parseInt(this.value)||0);calcSTop()">
+          <input class="fi" type="number" placeholder="₺ Fiyat" value="${r.fiyat||''}" style="flex:1" min="0" step="0.01" oninput="sRows[${i}].fiyat=parseFloat(this.value)||0;calcSTop()">
+          <button class="btn btn-d btn-sm" onclick="remSR(${i})" style="padding:8px 10px;flex-shrink:0">✕</button>
+        </div>
+        ${stokBilgi}
+      `;
     } else {
-      // Civciv / yumurta / diğer için tek adet
+      // Yumurta / diğer için tek adet (stok kontrolü yok)
       adetBlok = `
         <div style="display:flex;gap:6px;width:100%">
           <input class="fi" type="number" placeholder="Adet" value="${r.adet||''}" style="flex:1" min="1" oninput="sRows[${i}].adet=parseInt(this.value)||0;calcSTop()">
@@ -2283,6 +2420,14 @@ async function saveSat(){
       (k.irklar||[]).forEach(ir=>{toplamE+=(ir.erkek||0);toplamD+=(ir.disi||0)});
       if((r.erkekAdet||0) > toplamE){alert('"'+k.ad+'" kümesinde yeterli erkek yok! (Mevcut: '+toplamE+')');return}
       if((r.disiAdet||0)  > toplamD){alert('"'+k.ad+'" kümesinde yeterli dişi yok! (Mevcut: '+toplamD+')');return}
+    } else if(r.tip==='civciv'){
+      if(!r.adet||!r.fiyat){alert('Tüm ürünler için adet ve fiyat girin!');return}
+      const u = D.civcivUniteleri.find(x=>x.id===r.uniteId);
+      if (!u) { alert('Civciv ünitesi bulunamadı!'); return; }
+      if (r.adet > (u.adet||0)) {
+        alert(`"${u.ad}" ünitesinde yeterli ${uniteTipL(u.tip||'civciv').toLowerCase()} yok!\nMevcut: ${u.adet}, Satılmak istenen: ${r.adet}`);
+        return;
+      }
     } else {
       if(!r.adet||!r.fiyat){alert('Tüm ürünler için adet ve fiyat girin!');return}
     }
