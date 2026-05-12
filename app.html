@@ -2059,6 +2059,10 @@ function rCikRows() {
     const farkH  = fark !== 0
       ? `<span style="color:${fark>0?'#E65100':'var(--red)'};font-weight:700">${fark>0?'+':''}${fark} yumurta farkı</span>`
       : '<span class="cg" style="font-weight:700">✓ Tamam</span>';
+    // 0 ise inputta gösterme
+    const vC = (r.civciv||0) > 0 ? r.civciv : '';
+    const vO = (r.olu   ||0) > 0 ? r.olu    : '';
+    const vB = (r.bos   ||0) > 0 ? r.bos    : '';
     return `
       <div class="card mb8" style="padding:10px">
         <div class="row mb8">
@@ -2066,21 +2070,18 @@ function rCikRows() {
           <span class="b bw">${r.yumurta} yumurta</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-          <div>
-            <div class="f10 c2 fw" style="text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">✅ Çıkan</div>
-            <input class="fi" type="number" min="0" max="${r.yumurta}" value="${r.civciv||0}"
-              oninput="cikRows[${i}].civciv=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
-          </div>
-          <div>
-            <div class="f10 c2 fw" style="text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">💀 Ölü</div>
-            <input class="fi" type="number" min="0" max="${r.yumurta}" value="${r.olu||0}"
-              oninput="cikRows[${i}].olu=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
-          </div>
-          <div>
-            <div class="f10 c2 fw" style="text-transform:uppercase;letter-spacing:.4px;margin-bottom:3px">🥚 Boş</div>
-            <input class="fi" type="number" min="0" max="${r.yumurta}" value="${r.bos||0}"
-              oninput="cikRows[${i}].bos=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
-          </div>
+          <input class="fi" type="number" min="0" max="${r.yumurta}" value="${vC}"
+            placeholder="✅ Çıkan" title="Çıkan civciv"
+            style="text-align:center"
+            oninput="cikRows[${i}].civciv=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
+          <input class="fi" type="number" min="0" max="${r.yumurta}" value="${vO}"
+            placeholder="💀 Ölü" title="Ölü civciv"
+            style="text-align:center"
+            oninput="cikRows[${i}].olu=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
+          <input class="fi" type="number" min="0" max="${r.yumurta}" value="${vB}"
+            placeholder="🥚 Boş" title="Boş yumurta"
+            style="text-align:center"
+            oninput="cikRows[${i}].bos=Math.min(${r.yumurta},parseInt(this.value)||0);rCikOzet()">
         </div>
         <div class="f11" style="text-align:right;margin-top:6px">Toplam: ${toplam}/${r.yumurta} · ${farkH}</div>
       </div>`;
