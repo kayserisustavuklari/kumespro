@@ -364,6 +364,29 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
+<!-- GÜNCELLEME BANNER -->
+<div id="updateBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;
+  background:linear-gradient(135deg,#1B5E20,#2E7D32);color:#fff;padding:14px 16px;
+  box-shadow:0 4px 16px rgba(0,0,0,.25);animation:slideDown .3s ease-out">
+  <div style="display:flex;align-items:center;gap:12px;max-width:600px;margin:0 auto">
+    <div style="font-size:28px;flex-shrink:0">🎉</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-weight:700;font-size:14px;margin-bottom:2px">Uygulama Güncellemesi Mevcut!</div>
+      <div style="font-size:11px;opacity:.9">Yeni özelliklere geçmek için yeniden başlatın.</div>
+    </div>
+    <button onclick="applyUpdate()" style="background:#fff;color:#1B5E20;border:none;border-radius:8px;
+      padding:10px 18px;font-weight:700;font-size:13px;cursor:pointer;flex-shrink:0;
+      box-shadow:0 2px 8px rgba(0,0,0,.15)">
+      🔄 Yeniden Başlat
+    </button>
+    <button onclick="document.getElementById('updateBanner').style.display='none'"
+      style="background:transparent;color:#fff;border:none;font-size:24px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>
+  </div>
+</div>
+<style>
+@keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+
 
 <!-- PWA ANA EKRAN BANNER -->
 <div id="pwaBanner" style="display:none;position:fixed;bottom:86px;left:12px;right:12px;z-index:500;
@@ -575,7 +598,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
       <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--pri),var(--pri-m),var(--ora-m),var(--ora))"></div>
       <div style="margin-bottom:10px"><img src="data:image/png;base64,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" style="width:90px;height:90px;border-radius:22px;box-shadow:0 6px 24px rgba(26,95,138,.4)" alt="KP"></div>
       <div class="dg" style="font-size:28px;color:#fff;letter-spacing:-.3px">KümesPro</div>
-      <div style="display:inline-block;background:linear-gradient(135deg,var(--ora),var(--ora-d));color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:30px;margin-top:8px;letter-spacing:.6px">SÜRÜM 6.7</div>
+      <div style="display:inline-block;background:linear-gradient(135deg,var(--ora),var(--ora-d));color:#fff;font-size:11px;font-weight:700;padding:4px 16px;border-radius:30px;margin-top:8px;letter-spacing:.6px">SÜRÜM 7.0</div>
       <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:10px;font-weight:500;line-height:1.7">
         Kümes Takip & Yönetim Sistemi<br>
         <span style="color:rgba(255,255,255,.35)">Mobil · Çevrimdışı · Yerel Depolama</span>
@@ -693,7 +716,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
     </div>
 
     <div style="text-align:center;padding:14px;color:var(--gr3)">
-      <div class="f10 fw" style="letter-spacing:.5px">KümesPro v6.7 · HTML5 · PWA</div>
+      <div class="f10 fw" style="letter-spacing:.5px">KümesPro v7.0 · HTML5 · PWA</div>
       <div class="f10" style="margin-top:4px">Tüm veriler cihazınızda saklanır · İnternet gerektirmez</div>
     </div>
   </div>
@@ -884,8 +907,7 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   <input type="hidden" id="uniteId">
   <div id="uniteContent"></div>
   <div class="mf" style="flex-wrap:wrap;gap:8px">
-    <button class="btn btn-g btn-sm" style="flex:1" onclick="ucIslem('ekle')" id="ucBtnEkle">🐣 Ekle</button>
-    <button class="btn btn-d btn-sm" style="flex:1" onclick="ucIslem('cikar')" id="ucBtnCik">➖ Çıkar</button>
+    <button class="btn btn-g btn-sm" style="flex:1" onclick="ucIslem('ekle')" id="ucBtnEkle">🐣 Yeni Parti Ekle</button>
     <div style="display:flex;gap:8px;width:100%">
       <button class="btn btn-d btn-sm" style="flex:1" onclick="delUnite()">🗑 Üniteyi Sil</button>
       <button class="btn btn-s btn-sm" style="flex:2" onclick="closeM('mUnite')">Kapat</button>
@@ -914,7 +936,44 @@ body{font-family:'Instrument Sans',sans-serif;background:var(--gr6);color:var(--
   </div>
 </div></div>
 
-<!-- YENİ ÜNİTE OLUŞTUR -->
+<!-- PARTİ DÜZENLE -->
+<div class="mo" id="mPartiEdit"><div class="modal">
+  <div class="mt2">✏️ Parti Düzenle</div>
+  <input type="hidden" id="peUniteId">
+  <input type="hidden" id="pePartiId">
+  <div class="al al-w" style="font-size:12px;margin-bottom:10px">
+    ⚠️ Düzeltme yaparken dikkat: kalan adet değişirse ünite toplamı da güncellenir.
+  </div>
+  <div class="fg"><label class="fl">Kaynak / Irk Adı</label><input type="text" class="fi" id="peKaynak"></div>
+  <div class="fr">
+    <div class="fg"><label class="fl">Başlangıç Adeti</label><input type="number" class="fi" id="peAdet" min="0"></div>
+    <div class="fg"><label class="fl">Kalan Adet</label><input type="number" class="fi" id="peKalan" min="0"></div>
+  </div>
+  <div class="fg"><label class="fl">📅 Tarih</label><input type="date" class="fi" id="peTarih"></div>
+  <div class="fg"><label class="fl">Not</label><input type="text" class="fi" id="peNot"></div>
+  <div class="mf">
+    <button class="btn btn-s" style="flex:1" onclick="closeM('mPartiEdit')">İptal</button>
+    <button class="btn btn-d btn-sm" onclick="silParti()" style="flex:1">🗑 Partiyi Sil</button>
+    <button class="btn btn-p" style="flex:2" onclick="savePartiEdit()">Kaydet</button>
+  </div>
+</div></div>
+
+<!-- PARTİDEN ÇIKAR (Ölüm vb) -->
+<div class="mo" id="mPartiCikar"><div class="modal">
+  <div class="mt2">➖ Partiden Çıkar</div>
+  <input type="hidden" id="pcUniteId">
+  <input type="hidden" id="pcPartiId">
+  <div class="al al-w" style="font-size:12px" id="pcInfo"></div>
+  <div class="fg"><label class="fl">Çıkarılacak Adet</label><input type="number" class="fi" id="pcAdet" min="1" value="1"></div>
+  <div class="fg"><label class="fl">Sebep / Not</label>
+    <input type="text" class="fi" id="pcNot" placeholder="Ölüm, kayıp, hastalık, vb.">
+  </div>
+  <div class="fg"><label class="fl">📅 Tarih</label><input type="date" class="fi" id="pcTarih"></div>
+  <div class="mf">
+    <button class="btn btn-s" style="flex:1" onclick="closeM('mPartiCikar')">İptal</button>
+    <button class="btn btn-d" style="flex:2" onclick="savePartiCikar()">Çıkar</button>
+  </div>
+</div></div>
 <div class="mo" id="mUniteYeni"><div class="modal">
   <div class="mt2">🆕 Yeni Ünite</div>
   <div class="fg">
@@ -1167,7 +1226,6 @@ async function dbYukle() {
       if (h && h.islem==='ekle' && (!h.partiId || h.kalan == null)) {
         h.partiId = h.partiId || ('p_' + Math.random().toString(36).slice(2,11));
         h.kalan   = h.kalan   != null ? h.kalan : (h.adet || 0);
-        // Eski not'tan kaynak çıkar: "Kuluçka: X — Y" → kaynak = "Y"
         if (!h.kaynak && h.not) {
           const m = h.not.match(/—\s*(.+)$/);
           h.kaynak = m ? m[1].trim() : 'Genel';
@@ -1191,10 +1249,22 @@ async function dbYukle() {
       });
     }
 
+    // ÖNEMLİ: Toplam adeti parti kalanları toplamı ile senkronize et
+    // (DB'deki r.adet bazen partilerle uyumsuz olabiliyor)
+    const partiTopKalan = filtered.filter(h => h.islem==='ekle').reduce((s,p)=>s+(p.kalan||0),0);
+    const dbAdet = r.adet || 0;
+    let finalAdet = dbAdet;
+    if (partiTopKalan !== dbAdet) {
+      // Tutarsızlık varsa: parti toplamını doğru kabul et (kullanıcının görüntülediği aktif partiler)
+      console.warn(`[Sync] Ünite "${r.ad}": DB=${dbAdet}, parti toplamı=${partiTopKalan}. Parti toplamı esas alındı.`);
+      finalAdet = partiTopKalan;
+      needsMigrate = true;
+    }
+
     return {
       id: r.id, ad: r.ad,
       tip: (meta && meta.tip) || 'civciv',
-      adet: r.adet || 0,
+      adet: finalAdet,
       hareketler: filtered,
       _migrate: needsMigrate
     };
@@ -1623,11 +1693,8 @@ function openUnite(id) {
   const tipAd = uniteTipL(tip), tipIc = uniteTipI(tip);
   document.getElementById('uniteId').value = id;
   document.getElementById('mUniteTitle').textContent = `${tipIc} ${u.ad}`;
-  // Butonları tipine göre güncelle
   const btnE = document.getElementById('ucBtnEkle');
-  const btnC = document.getElementById('ucBtnCik');
-  if (btnE) btnE.innerHTML = `${tipIc} ${tipAd} Ekle`;
-  if (btnC) btnC.innerHTML = `➖ ${tipAd} Çıkar`;
+  if (btnE) btnE.innerHTML = `${tipIc} Yeni ${tipAd} Partisi Ekle`;
   rUniteContent(id); openM('mUnite');
 }
 
@@ -1639,6 +1706,117 @@ async function delUnite() {
   closeM('mUnite');
   if (curTab==='anasayfa') rDash();
   toast('🗑 Ünite silindi');
+}
+
+// ─── PARTİ YÖNETİMİ ──────────────────────────────────────────
+function editParti(uId, partiId) {
+  const u = D.civcivUniteleri.find(x=>x.id===uId); if (!u) return;
+  const p = (u.hareketler||[]).find(h => h.partiId===partiId); if (!p) return;
+  document.getElementById('peUniteId').value = uId;
+  document.getElementById('pePartiId').value = partiId;
+  document.getElementById('peKaynak').value  = p.kaynak || 'Genel';
+  document.getElementById('peAdet').value    = p.adet || 0;
+  document.getElementById('peKalan').value   = p.kalan || 0;
+  document.getElementById('peTarih').value   = p.tarih || td();
+  document.getElementById('peNot').value     = p.not || '';
+  openM('mPartiEdit');
+}
+
+async function savePartiEdit() {
+  const uId = document.getElementById('peUniteId').value;
+  const partiId = document.getElementById('pePartiId').value;
+  const u = D.civcivUniteleri.find(x=>x.id===uId); if (!u) return;
+  const p = (u.hareketler||[]).find(h => h.partiId===partiId); if (!p) return;
+
+  const yeniKaynak = document.getElementById('peKaynak').value.trim() || 'Genel';
+  const yeniAdet   = parseInt(document.getElementById('peAdet').value)  || 0;
+  let yeniKalan    = parseInt(document.getElementById('peKalan').value) || 0;
+  const yeniTarih  = document.getElementById('peTarih').value || p.tarih;
+  const yeniNot    = document.getElementById('peNot').value.trim();
+
+  if (yeniKalan > yeniAdet) {
+    if (!confirm(`Kalan (${yeniKalan}) başlangıçtan (${yeniAdet}) büyük olamaz!\nKalan ${yeniAdet} olarak düzeltilsin mi?`)) return;
+    yeniKalan = yeniAdet;
+  }
+
+  // Ünitenin toplam adetini güncelle: eski kalan - yeni kalan farkını uygula
+  const fark = yeniKalan - (p.kalan||0);
+  u.adet = Math.max(0, (u.adet||0) + fark);
+
+  p.kaynak = yeniKaynak;
+  p.adet   = yeniAdet;
+  p.kalan  = yeniKalan;
+  p.tarih  = yeniTarih;
+  p.not    = yeniNot;
+
+  await dbUniteGuncelle(u);
+  closeM('mPartiEdit');
+  rUniteContent(uId);
+  if (curTab==='anasayfa') rDash();
+  toast('✅ Parti güncellendi','ok');
+}
+
+async function silParti() {
+  const uId = document.getElementById('peUniteId').value;
+  const partiId = document.getElementById('pePartiId').value;
+  const u = D.civcivUniteleri.find(x=>x.id===uId); if (!u) return;
+  const p = (u.hareketler||[]).find(h => h.partiId===partiId); if (!p) return;
+  if (!confirm(`"${p.kaynak||'parti'}" partisini tamamen silmek istiyor musunuz?\n\nÜnite toplamından kalan ${p.kalan} hayvan düşülecek!`)) return;
+
+  u.adet = Math.max(0, (u.adet||0) - (p.kalan||0));
+  u.hareketler = u.hareketler.filter(h => h.partiId !== partiId);
+  await dbUniteGuncelle(u);
+  closeM('mPartiEdit');
+  rUniteContent(uId);
+  if (curTab==='anasayfa') rDash();
+  toast('🗑 Parti silindi');
+}
+
+function cikarParti(uId, partiId) {
+  const u = D.civcivUniteleri.find(x=>x.id===uId); if (!u) return;
+  const p = (u.hareketler||[]).find(h => h.partiId===partiId); if (!p) return;
+  document.getElementById('pcUniteId').value = uId;
+  document.getElementById('pcPartiId').value = partiId;
+  const yas = p.tarih ? Math.max(0, Math.floor((new Date() - new Date(p.tarih+'T00:00:00'))/86400000)) : null;
+  document.getElementById('pcInfo').innerHTML =
+    `🐓 <strong>${p.kaynak||'Genel'}</strong> partisinden çıkar<br>📦 Kalan: <strong>${p.kalan}</strong>${yas!=null?' · ⏱ '+gunStr(yas):''}`;
+  document.getElementById('pcAdet').value  = 1;
+  document.getElementById('pcAdet').max    = p.kalan || 0;
+  document.getElementById('pcNot').value   = '';
+  document.getElementById('pcTarih').value = td();
+  openM('mPartiCikar');
+}
+
+async function savePartiCikar() {
+  const uId = document.getElementById('pcUniteId').value;
+  const partiId = document.getElementById('pcPartiId').value;
+  const u = D.civcivUniteleri.find(x=>x.id===uId); if (!u) return;
+  const p = (u.hareketler||[]).find(h => h.partiId===partiId); if (!p) return;
+  const adet  = parseInt(document.getElementById('pcAdet').value)  || 0;
+  const not   = document.getElementById('pcNot').value.trim();
+  const tarih = document.getElementById('pcTarih').value || td();
+
+  if (adet < 1) { alert('Geçerli adet girin!'); return; }
+  if (adet > (p.kalan||0)) {
+    alert(`"${p.kaynak||'parti'}" partisinde yeterli stok yok!\nKalan: ${p.kalan}, Çıkarılmak istenen: ${adet}`);
+    return;
+  }
+
+  p.kalan = Math.max(0, (p.kalan||0) - adet);
+  u.adet  = Math.max(0, (u.adet||0)  - adet);
+  u.hareketler = u.hareketler || [];
+  u.hareketler.push({
+    islem:'cikar', adet,
+    partiId: partiId,
+    kaynak:  p.kaynak,
+    not:     not || 'Ölüm/Kayıp',
+    tarih
+  });
+  await dbUniteGuncelle(u);
+  closeM('mPartiCikar');
+  rUniteContent(uId);
+  if (curTab==='anasayfa') rDash();
+  toast(`➖ ${adet} adet çıkarıldı`,'ok');
 }
 
 // Hareket silme — adet otomatik geri alınır
@@ -1746,7 +1924,7 @@ function rUniteContent(id) {
       const oran = p.adet > 0 ? Math.round((p.kalan/p.adet)*100) : 0;
       h += `<div class="card mb8" style="padding:10px">
         <div class="row mb4">
-          <div>
+          <div style="flex:1">
             <div class="f12 fw">🐓 ${p.kaynak || 'Genel'}</div>
             <div class="f11 c3 mt4">📅 ${fd(p.tarih)}${yas!=null?' · ⏱ '+gunStr(yas):''}</div>
           </div>
@@ -1755,8 +1933,12 @@ function rUniteContent(id) {
             <div class="f10 c3">/${p.adet}</div>
           </div>
         </div>
-        <div style="background:var(--gray-xx);height:6px;border-radius:3px;overflow:hidden">
+        <div style="background:var(--gray-xx);height:6px;border-radius:3px;overflow:hidden;margin-bottom:8px">
           <div style="background:linear-gradient(90deg,var(--green),#7CB342);height:100%;width:${oran}%"></div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-s btn-sm" style="flex:1;padding:6px 8px;font-size:11px" onclick="editParti('${u.id}','${p.partiId}')">✏️ Düzenle</button>
+          <button class="btn btn-d btn-sm" style="flex:1;padding:6px 8px;font-size:11px" onclick="cikarParti('${u.id}','${p.partiId}')">➖ Çıkar (Ölüm)</button>
         </div>
       </div>`;
     });
@@ -3056,28 +3238,62 @@ function closeWelcome(showInstall) {
 }
 
 // ── OTOMATİK GÜNCELLEME ───────────────────────────────────────
+let _pendingWorker = null;
+let _refreshing = false;
+
 async function checkForUpdate() {
   try {
     if (!('serviceWorker' in navigator)) return;
     const regs = await navigator.serviceWorker.getRegistrations();
     for (const reg of regs) {
+      // Halihazırda waiting durumda bir worker varsa banner göster
+      if (reg.waiting && navigator.serviceWorker.controller) {
+        _pendingWorker = reg.waiting;
+        showUpdateBanner();
+      }
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
+        if (!newWorker) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            console.log('[KP v' + APP_VERSION + '] Güncelleme bulundu, uygulanıyor...');
-            if (typeof toast === 'function') toast('🔄 Yeni güncelleme uygulanıyor...', '', 2000);
-            setTimeout(() => newWorker.postMessage({ type: 'SKIP_WAITING' }), 800);
+            // Yeni sürüm hazır — kullanıcıya soralım
+            console.log('[KP v' + APP_VERSION + '] Yeni sürüm bekliyor');
+            _pendingWorker = newWorker;
+            showUpdateBanner();
           }
         });
       });
       await reg.update();
     }
     navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (_refreshing) return;
+      _refreshing = true;
       console.log('[KP] Sayfa güncellendi, yenileniyor...');
       window.location.reload();
     });
   } catch(e) { /* önemsiz */ }
+}
+
+function showUpdateBanner() {
+  const banner = document.getElementById('updateBanner');
+  if (banner) banner.style.display = 'block';
+}
+
+function applyUpdate() {
+  if (!_pendingWorker) {
+    // Direkt yenile (worker bilgisi yoksa)
+    window.location.reload();
+    return;
+  }
+  const banner = document.getElementById('updateBanner');
+  if (banner) {
+    banner.innerHTML = `<div style="display:flex;align-items:center;gap:12px;justify-content:center;color:#fff">
+      <div style="width:24px;height:24px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite"></div>
+      <div style="font-weight:700">Güncelleme uygulanıyor...</div>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
+  }
+  _pendingWorker.postMessage({ type: 'SKIP_WAITING' });
 }
 
 // ─── YIL SONU / YENİ DÖNEM ────────────────────────────────────
@@ -3449,12 +3665,17 @@ function yedekYukle(event) {
 //  PWA — Kurulum, Güncelleme, Platform Algılama
 // ═══════════════════════════════════════════════════════════
 
-const APP_VERSION = '6.7';
+const APP_VERSION = '7.0';
 console.log('[KP] Script yüklendi, v' + APP_VERSION);
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') checkForUpdate();
 });
+
+// Açık duran sayfada her 30 dakikada bir güncelleme kontrol et
+setInterval(() => {
+  if (document.visibilityState === 'visible') checkForUpdate();
+}, 30 * 60 * 1000);
 
 // pwaBanner butonları için alias (HTML'de var)
 function pwaBannerYukle() {
