@@ -1630,14 +1630,15 @@ function rDash() {
     const topY = (k.kaynaklar||[]).reduce((s,r) => s+(r.adet||0), 0) || k.toplamYumurta || 0;
     const cikimD = new Date(new Date(k.baslangic).getTime() + k.sure * 86400000);
     const sepetD = new Date(cikimD.getTime() - 3 * 86400000);
+    const fdD = d => d.toLocaleDateString('tr-TR');
     hH += `<div class="hcard mb8" onclick="goTab('kulucka')" style="cursor:pointer">
       <div class="row"><span class="ht">${k.ad}</span><span class="b bw">${kalan} gün</span></div>
       <div class="hs">🥚 ${topY} yumurta · 📅 ${fd(k.baslangic)} · ⏱ ${k.sure} gün</div>
       <div class="hbar"><div class="hfill" style="width:${pct}%"></div></div>
       <div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div>
       <div style="display:flex;gap:10px;margin-top:7px;flex-wrap:wrap">
-        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fd(cikimD)}</span>
-        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fd(sepetD)}</span>
+        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fdD(cikimD)}</span>
+        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fdD(sepetD)}</span>
       </div>
     </div>`;
   });
@@ -2252,6 +2253,9 @@ function kuCard(k){
   const done=k.durum==='tamamlandi';
   const topY=(k.kaynaklar||[]).reduce((s,r)=>s+(r.adet||0),0)||k.toplamYumurta||0;
   const kayStr=(k.kaynaklar||[]).map(r=>{const km=D.kumesler.find(x=>x.id===r.kumesId);return(r.aciklama||km?.ad||'Serbest')+': '+r.adet}).join(' · ');
+  const cikimD=new Date(new Date(k.baslangic).getTime()+k.sure*86400000);
+  const sepetD=new Date(cikimD.getTime()-3*86400000);
+  const fdD=d=>d.toLocaleDateString('tr-TR');
   return`<div class="${done?'stripe-card':'hcard'} mb8">
     <div class="row mb4">
       <div><div class="${done?'f13 fw':'ht'}">${k.ad}</div><div class="${done?'f11 c2 mt4':'hs'}">📅 ${fd(k.baslangic)} · ⏱ ${k.sure} gün</div></div>
@@ -2259,7 +2263,7 @@ function kuCard(k){
     </div>
     <div class="${done?'f12 c2':'hs'}">🥚 Toplam ${topY} yumurta</div>
     ${kayStr?`<div class="${done?'f11 c3':'hd'} mt4">${kayStr}</div>`:''}
-    ${!done?`<div class="hbar"><div class="hfill" style="width:${pct}%"></div></div><div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div>`:''}
+    ${!done?`<div class="hbar"><div class="hfill" style="width:${pct}%"></div></div><div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fdD(cikimD)}</span><span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fdD(sepetD)}</span></div>`:''}
     ${done&&k.cikim?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       <span class="b bg">🐣 ${k.cikim.civciv} çıktı</span><span class="b br">🥚 ${k.cikim.bos} boş</span>
       <span class="b bs">💀 ${k.cikim.olu} ölü</span>${topY>0?`<span class="b bw">%${Math.round(k.cikim.civciv/topY*100)} verim</span>`:''}
