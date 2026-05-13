@@ -1628,11 +1628,17 @@ function rDash() {
     const gec = Math.min(Math.max(0, Math.floor((now - new Date(k.baslangic)) / 86400000)), k.sure);
     const pct = Math.round(gec / k.sure * 100), kalan = Math.max(0, k.sure - gec);
     const topY = (k.kaynaklar||[]).reduce((s,r) => s+(r.adet||0), 0) || k.toplamYumurta || 0;
+    const cikimD = new Date(new Date(k.baslangic).getTime() + k.sure * 86400000);
+    const sepetD = new Date(cikimD.getTime() - 3 * 86400000);
     hH += `<div class="hcard mb8" onclick="goTab('kulucka')" style="cursor:pointer">
       <div class="row"><span class="ht">${k.ad}</span><span class="b bw">${kalan} gün</span></div>
       <div class="hs">🥚 ${topY} yumurta · 📅 ${fd(k.baslangic)} · ⏱ ${k.sure} gün</div>
       <div class="hbar"><div class="hfill" style="width:${pct}%"></div></div>
       <div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div>
+      <div style="display:flex;gap:10px;margin-top:7px;flex-wrap:wrap">
+        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fd(cikimD)}</span>
+        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fd(sepetD)}</span>
+      </div>
     </div>`;
   });
   document.getElementById('dHatch').innerHTML = hH;
