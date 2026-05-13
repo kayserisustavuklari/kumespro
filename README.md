@@ -1,4 +1,48 @@
-# Kümespro 6.7
+# Kümespro 7
+v7.0 yayında! 🎉
+🔧 Civciv Ünitesi Düzeltmeleri
+
+1. Toplam senkronizasyonu
+
+Açılışta otomatik kontrol: ünite toplamı parti kalanları toplamı ile eşleşmiyorsa düzeltilir
+Console'a uyarı bırakır: [Sync] Ünite "X": DB=105, parti toplamı=90. Parti toplamı esas alındı.
+Ardından DB'ye doğru değer yazılır → 105 → 90'a iner
+
+2. Parti düzenleme (yeni!) ✏️
+
+Her aktif parti kartının altında "✏️ Düzenle" butonu
+Açılan modalda: Kaynak adı, Başlangıç adeti, Kalan adet, tarih, not düzenlenebilir
+Kalan değiştirilirse ünite toplamı otomatik senkronize olur
+"🗑 Partiyi Sil" seçeneği de var → kalan adet kadar üniteden düşülür
+
+
+3. Parti bazlı çıkarma ➖
+
+
+Her aktif parti kartının altında "➖ Çıkar (Ölüm)" butonu
+Modalda partinin bilgisi gösterilir (kaynak, kalan, yaş)
+Adet, sebep (not) ve tarih girilir → o parti'den kesinlikle düşülür
+Artık FIFO karmaşası yok, hangi partiden çıkardığın net
+
+4. Ünite ana butonu sadeleşti
+
+Eski "Ekle / Çıkar" yerine tek buton: "🐣 Yeni Parti Ekle"
+Çıkarma artık her parti kartının içinde — partiyi bilmeden çıkarma yapılmasın
+
+🎉 Güncelleme Bildirimi (yeni!)
+
+Program çalışırken yeni sürüm geldiğinde üstte yeşil banner çıkar:
+
+  🎉 Uygulama Güncellemesi Mevcut!
+  
+     Yeni özelliklere geçmek için yeniden başlatın.
+                              [🔄 Yeniden Başlat]
+
+Kullanıcı butona basınca "Güncelleme uygulanıyor..." spinner gösterir, sayfa yenilenir
+× ile banner kapatılabilir (sonradan tekrar yenileyince yine çıkar)
+30 dakikada bir otomatik kontrol — açık kalmış sayfalar da güncelleme görür
+Sekmeyi geri açınca da kontrol edilir
+
 v6.7 yayında! 🦚
 
 Yapılan Güncellemeler
