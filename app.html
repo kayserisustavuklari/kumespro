@@ -1637,8 +1637,8 @@ function rDash() {
       <div class="hbar"><div class="hfill" style="width:${pct}%"></div></div>
       <div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div>
       <div style="display:flex;gap:10px;margin-top:7px;flex-wrap:wrap">
-        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fdD(cikimD)}</span>
         <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fdD(sepetD)}</span>
+        <span style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fdD(cikimD)}</span>
       </div>
     </div>`;
   });
@@ -1951,37 +1951,9 @@ function rUniteContent(id) {
     });
   }
 
-  if (hvs.length) {
-    h += '<div class="divlabel">Hareket Geçmişi</div>';
-    const now = new Date();
-    // Orijinal indeks bilgisini koruyarak son 10
-    const indexli = hvAll.map((hv,i)=>({hv,idx:i})).slice(-10).reverse();
-    indexli.forEach(({hv,idx}) => {
-      // Bu partinin yaşı (sadece ekle hareketleri için)
-      let yasRoz = '';
-      if (hv.islem==='ekle' && hv.tarih) {
-        const g = Math.max(0, Math.floor((now - new Date(hv.tarih+'T00:00:00')) / 86400000));
-        yasRoz = `<span class="b bw" style="margin-left:6px;background:#FFF3E0;color:#E65100;font-weight:700">⏱ ${gunStr(g)}</span>`;
-      }
-      h += `<div class="hv-card mb8"><div class="row">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;background:${hv.islem==='ekle'?'var(--green-l)':'var(--red-l)'}">
-            ${hv.islem==='ekle'?tipIc:'📦'}</div>
-          <div>
-            <div class="f12 fw">${hv.islem==='ekle'?'Eklendi':'Çıkarıldı'}${yasRoz}</div>
-            ${hv.not?`<div class="f11 c3">${hv.not}</div>`:''}
-          </div>
-        </div>
-        <div style="text-align:right">
-          <div class="fw f13 ${hv.islem==='ekle'?'cg':'cr'}">${hv.islem==='ekle'?'+':'-'}${hv.adet}</div>
-          <div class="f11 c3">${fd(hv.tarih)}</div>
-        </div>
-      </div>
-      <div style="text-align:right;margin-top:6px">
-        <button class="btn btn-d btn-sm" onclick="delUcHareket('${u.id}',${idx})" style="width:auto;padding:4px 10px;font-size:11px">🗑 Sil</button>
-      </div></div>`;
-    });
-  } else h += '<div class="empty" style="padding:20px"><div class="et">Henüz hareket yok</div></div>';
+  if (!aktifPartiler.length) {
+    h += '<div class="empty" style="padding:20px"><div class="et">Henüz hareket yok</div></div>';
+  }
 
   document.getElementById('uniteContent').innerHTML = h;
 }
@@ -2141,9 +2113,10 @@ function openKD(id){
     });
   }
   if(k.not)h+=`<div class="al al-i mt8">${k.not}</div>`;
-  const son=(k.hareketler||[]).slice(-5).reverse();
-  if(son.length){h+='<div class="divlabel">Son Hareketler</div>';
-    son.forEach(hv=>{h+=`<div class="hv-card mb8"><div class="row"><span class="f12 fw">${hv.islem==='ekle'?'➕':'➖'} ${hv.irkAd||'Genel'}</span><span class="f12 c3">${fd(hv.tarih)}</span></div><div class="f12 c3 mt4">♂${hv.erkek} · ♀${hv.disi}${hv.not?' · '+hv.not:''}${hv.dogumTarihi?' · 🎂'+fd(hv.dogumTarihi):''}</div></div>`});
+  const hvAllK=(k.hareketler||[]);
+  const indexliK=hvAllK.map((hv,i)=>({hv,idx:i})).slice(-5).reverse();
+  if(indexliK.length){h+='<div class="divlabel">Son Hareketler</div>';
+    indexliK.forEach(({hv,idx})=>{h+=`<div class="hv-card mb8"><div class="row"><span class="f12 fw">${hv.islem==='ekle'?'➕':'➖'} ${hv.irkAd||'Genel'}</span><span class="f12 c3">${fd(hv.tarih)}</span></div><div class="f12 c3 mt4">♂${hv.erkek} · ♀${hv.disi}${hv.not?' · '+hv.not:''}${hv.dogumTarihi?' · 🎂'+fd(hv.dogumTarihi):''}</div><div style="text-align:right;margin-top:6px"><button class="btn btn-d btn-sm" onclick="delKumesHareket('${k.id}',${idx})" style="width:auto;padding:4px 10px;font-size:11px">🗑 Sil</button></div></div>`});
   }
   document.getElementById('kDContent').innerHTML=h;openM('mKDet');
 }
@@ -2152,6 +2125,26 @@ function editK(){
   closeM('mKDet');document.getElementById('kEId').value=id;document.getElementById('mKuTitle').textContent='Kümes Düzenle';
   document.getElementById('kAd').value=k.ad;document.getElementById('kTur').value=k.tur;document.getElementById('kNot').value=k.not||'';
   irkRows=JSON.parse(JSON.stringify(k.irklar||[]));rIrkRows();openM('mKumes');
+}
+async function delKumesHareket(kId, idx) {
+  const k = D.kumesler.find(x => x.id === kId); if (!k) return;
+  const hv = (k.hareketler||[])[idx]; if (!hv) return;
+  if (!confirm('Bu hareketi silmek istiyor musunuz?\n\nHareket etkisi geri alınacak!')) return;
+  const irk = (k.irklar||[]).find(r => r.ad === hv.irkAd) || (k.irklar||[])[0];
+  if (irk) {
+    if (hv.islem === 'ekle') {
+      irk.erkek = Math.max(0, (irk.erkek||0) - hv.erkek);
+      irk.disi = Math.max(0, (irk.disi||0) - hv.disi);
+    } else {
+      irk.erkek = (irk.erkek||0) + hv.erkek;
+      irk.disi = (irk.disi||0) + hv.disi;
+    }
+  }
+  k.hareketler.splice(idx, 1);
+  await dbKumesGuncelle(k);
+  openKD(kId);
+  rKumesler();
+  toast('🗑 Hareket silindi', 'ok');
 }
 async function delK(){
   if(!confirm('Bu kümesi silmek istiyor musunuz?'))return;
@@ -2263,7 +2256,7 @@ function kuCard(k){
     </div>
     <div class="${done?'f12 c2':'hs'}">🥚 Toplam ${topY} yumurta</div>
     ${kayStr?`<div class="${done?'f11 c3':'hd'} mt4">${kayStr}</div>`:''}
-    ${!done?`<div class="hbar"><div class="hfill" style="width:${pct}%"></div></div><div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fdD(cikimD)}</span><span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fdD(sepetD)}</span></div>`:''}
+    ${!done?`<div class="hbar"><div class="hfill" style="width:${pct}%"></div></div><div class="hd">%${pct} tamamlandı · ${gec}/${k.sure} gün geçti</div><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff">🧺 Sepete: ${fdD(sepetD)}</span><span style="background:rgba(255,255,255,.15);border-radius:7px;padding:3px 9px;font-size:11px;font-weight:600;color:#fff">🐣 Çıkım: ${fdD(cikimD)}</span></div>`:''}
     ${done&&k.cikim?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
       <span class="b bg">🐣 ${k.cikim.civciv} çıktı</span><span class="b br">🥚 ${k.cikim.bos} boş</span>
       <span class="b bs">💀 ${k.cikim.olu} ölü</span>${topY>0?`<span class="b bw">%${Math.round(k.cikim.civciv/topY*100)} verim</span>`:''}
@@ -2863,7 +2856,7 @@ function rFinans(){
   // Filtre buton stilleri
   ['all','yem','ilac','hayvan','ekipman','kulucka','bakim','enerji','kumes','diger'].forEach(f=>{
     const b=document.getElementById('gf-'+f);
-    if(b){ b.className = 'btn btn-sm ' + (curGFilter===f?'btn-p':'btn-s'); b.style.flexShrink='0'; }
+    if(b){ b.className = 'btn btn-sm ' + (curGFilter===f?'btn-p':'btn-s'); b.style.flexShrink='0'; b.style.width='auto'; }
   });
 
   const tL={yem:'🌾 Yem',ilac:'💊 İlaç',hayvan:'🐓 Canlı Hayvan',ekipman:'🔧 Ekipman',kulucka:'🥚 Kuluçka',bakim:'🧹 Bakım',enerji:'⚡ Enerji',kumes:'🏠 Kümes',diger:'📦 Diğer'};
