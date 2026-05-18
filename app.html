@@ -2580,8 +2580,47 @@ function editSat(id){
   rSRows();openM('mSat');
 }
 async function delSat(id){
-  if(!confirm('Bu satışı silmek istiyor musunuz?'))return;
-  await dbSatisSil(id);rSatislar();if(curTab==='anasayfa')rDash();toast('🗑 Silindi');
+  if(!confirm('Bu satışı silmek istiyor musunuz?\nSatılan hayvan/civcivler ilgili kümes/üniteye geri eklenecek.'))return;
+  const s = D.satislar.find(x => x.id === id);
+  if (!s) return;
+  const tarih = td();
+  const guncKumesler = new Set();
+  const guncUniteler = new Set();
+  (s.urunler || []).forEach(r => {
+    if (r.tip === 'hayvan' && r.kumesId) {
+      const k = D.kumesler.find(x => x.id === r.kumesId);
+      if (k && k.irklar && k.irklar.length > 0) {
+        let kalE = r.erkekAdet || 0;
+        let kalD = r.disiAdet || 0;
+        for (const irk of k.irklar) {
+          if (kalE > 0) { irk.erkek = (irk.erkek || 0) + kalE; kalE = 0; }
+          if (kalD > 0) { irk.disi = (irk.disi || 0) + kalD; kalD = 0; }
+          if (!kalE && !kalD) break;
+        }
+        k.hareketler = k.hareketler || [];
+        k.hareketler.push({ islem: 'ekle', erkek: r.erkekAdet || 0, disi: r.disiAdet || 0, not: 'Satış iptali: ' + (s.musteri || 'Anonim'), tarih, irkAd: 'Genel' });
+        guncKumesler.add(k.id);
+      }
+    } else if (r.tip === 'civciv' && r.uniteId && r.partiId) {
+      const u = D.civcivUniteleri.find(x => x.id === r.uniteId);
+      if (u) {
+        const parti = (u.hareketler || []).find(h => h.partiId === r.partiId && h.islem !== 'cikar');
+        if (parti) { parti.kalan = (parti.kalan || 0) + r.adet; }
+        u.adet = (u.adet || 0) + r.adet;
+        u.hareketler = u.hareketler || [];
+        u.hareketler.push({ islem: 'ekle', adet: r.adet, partiId: r.partiId, kaynak: parti ? parti.kaynak : 'Genel', not: 'Satış iptali: ' + (s.musteri || 'Anonim'), tarih });
+        guncUniteler.add(u.id);
+      }
+    }
+  });
+  const saves = [];
+  guncKumesler.forEach(kid => { const k = D.kumesler.find(x => x.id === kid); if (k) saves.push(dbKumesGuncelle(k)); });
+  guncUniteler.forEach(uid2 => { const u = D.civcivUniteleri.find(x => x.id === uid2); if (u) saves.push(dbUniteGuncelle(u)); });
+  if (saves.length) await Promise.all(saves);
+  await dbSatisSil(id);
+  rSatislar();
+  if (curTab === 'anasayfa') rDash();
+  toast('🗑 Satış silindi, stoklar geri yüklendi');
 }
 function rSRows(){
   const kO=D.kumesler.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
