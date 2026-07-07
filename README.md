@@ -1,114 +1,63 @@
-# Kümespro 7
-v7.0 yayında! 🎉
-🔧 Civciv Ünitesi Düzeltmeleri
+<div align="center">
 
-1. Toplam senkronizasyonu
+<img src="logo.png" alt="KümesPro" width="240">
 
-Açılışta otomatik kontrol: ünite toplamı parti kalanları toplamı ile eşleşmiyorsa düzeltilir
-Console'a uyarı bırakır: [Sync] Ünite "X": DB=105, parti toplamı=90. Parti toplamı esas alındı.
-Ardından DB'ye doğru değer yazılır → 105 → 90'a iner
+# KümesPro
 
-2. Parti düzenleme (yeni!) ✏️
+**Kümes, kuluçka, satış ve finans takip sistemi**
 
-Her aktif parti kartının altında "✏️ Düzenle" butonu
-Açılan modalda: Kaynak adı, Başlangıç adeti, Kalan adet, tarih, not düzenlenebilir
-Kalan değiştirilirse ünite toplamı otomatik senkronize olur
-"🗑 Partiyi Sil" seçeneği de var → kalan adet kadar üniteden düşülür
+_Kümesindeki her hayvanı, her kuluçkayı, her satışı ve her kuruşu tek yerden takip et._
 
+[**▶ Uygulamayı Aç**](https://kayserisustavuklari.github.io/kumespro/)
 
-3. Parti bazlı çıkarma ➖
+</div>
 
+---
 
-Her aktif parti kartının altında "➖ Çıkar (Ölüm)" butonu
-Modalda partinin bilgisi gösterilir (kaynak, kalan, yaş)
-Adet, sebep (not) ve tarih girilir → o parti'den kesinlikle düşülür
-Artık FIFO karmaşası yok, hangi partiden çıkardığın net
+## KümesPro nedir?
 
-4. Ünite ana butonu sadeleşti
+KümesPro; güvercin, tavuk, hindi, kaz, bıldırcın, keklik, tavus kuşu gibi kanatlı yetiştiren üreticiler için hazırlanmış bir kümes yönetim uygulaması. Kaç kümesin var, her kümeste hangi ırktan kaç erkek/dişi hayvan olduğu, hangi kuluçkanın kaçıncı gününde olduğu, hangi civciv partisinden kaç tanenin satıldığı — hepsi tek ekranda.
 
-Eski "Ekle / Çıkar" yerine tek buton: "🐣 Yeni Parti Ekle"
-Çıkarma artık her parti kartının içinde — partiyi bilmeden çıkarma yapılmasın
+Defter tutmak yerine telefonundan birkaç dokunuşla kaydet, uygulama senin için toplamları, verim yüzdelerini ve kâr/zarar hesabını çıkarsın. Veriler buluta (Supabase) kaydedildiği için telefon değişse, uygulama silinse de veriler kaybolmaz; Google hesabınla giriş yapan herkes sadece kendi verisini görür.
 
-🎉 Güncelleme Bildirimi (yeni!)
+## Nasıl çalışır?
 
-Program çalışırken yeni sürüm geldiğinde üstte yeşil banner çıkar:
+1. **Kümes oluştur** — kümes adını, türünü ve ırklarını gir, erkek/dişi sayılarını gir
+2. **Kuluçkaya başlat** — hangi kümeslerden yumurta aldığını, kaç yumurta koyduğunu kaydet; uygulama gün sayacını otomatik işletir
+3. **Çıkım kaydet** — kuluçka bitince çıkan/boş/ölü sayılarını gir, verim yüzdesi otomatik hesaplanır; çıkan civcivler istersen doğrudan civciv ünitesine aktarılır
+4. **Satış ve gider işle** — satılan hayvan/civciv/yumurdayı ve yem/ilaç/enerji giderlerini kaydet, kısmi ödemeleri takip et
+5. **Sezon sonunda arşivle** — tek tıkla mevcut sezonu arşivle, yeni sezona sıfırdan başla; eski sezonlara istediğin zaman geri dönüp bakabilirsin
 
-  🎉 Uygulama Güncellemesi Mevcut!
-  
-     Yeni özelliklere geçmek için yeniden başlatın.
-                              [🔄 Yeniden Başlat]
+## Öne çıkan özellikler
 
-Kullanıcı butona basınca "Güncelleme uygulanıyor..." spinner gösterir, sayfa yenilenir
-× ile banner kapatılabilir (sonradan tekrar yenileyince yine çıkar)
-30 dakikada bir otomatik kontrol — açık kalmış sayfalar da güncelleme görür
-Sekmeyi geri açınca da kontrol edilir
+- 🏠 **Sınırsız kümes yönetimi** — her kümeste birden fazla ırk/grup, erkek/dişi ayrımı, giriş/çıkış geçmişi
+- 🥚 **Kuluçka takibi** — çoklu yumurta kaynağı, otomatik gün sayacı, tür bazlı süre (güvercin, tavuk, bıldırcın, keklik, tavus...), çıkım sonuçları ve verim yüzdesi
+- 🐣 **Civciv/yavru ünitesi** — parti bazlı ekleme/çıkarma, tam hareket geçmişi, kalan adet takibi
+- 💰 **Satış modülü** — tek satışta karışık ürün, kısmi ödeme ve kalan borç takibi, tek tıkla "alındı" işaretleme
+- 📊 **Finans takibi** — kategorili gider kaydı, kümes bazlı raporlama, otomatik net kâr/zarar
+- 🌱 **Sezon arşivi** — sezonu anlık görüntüyle arşivle, geçmiş sezonları istediğin zaman incele
+- ☁️ **Bulut & güvenlik** — Google ile giriş, JSON yedek alma/geri yükleme, çevrimdışı çalışan PWA
+- 📱 **Her yerde çalışır** — tarayıcıdan, ana ekrana kurulu PWA olarak veya Android APK olarak
 
-v6.7 yayında! 🦚
+## Teknoloji
 
-Yapılan Güncellemeler
+Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir web uygulaması; veritabanı ve kimlik doğrulama için [Supabase](https://supabase.com) kullanır, [GitHub Pages](https://pages.github.com) üzerinden yayınlanır. Aynı kod tabanı [Capacitor](https://capacitorjs.com) ile paketlenerek Android APK olarak da çalışır — GitHub'a her push, hem web sürümünü hem de kurulu APK'ları otomatik günceller.
 
-🦚 Tavus Kuşu kuluçkası
+## Sürüm Geçmişi
 
-Yeni kuluçka oluştururken seçilebilir: 🦚 Tavus Kuşu — 28 gün
+| Sürüm | Öne çıkanlar |
+|-------|--------------|
+| **7.1** | Android APK desteği eklendi (Capacitor ile kabuk APK, Google girişi için sistem tarayıcısı yönlendirmesi) |
+| **7.0** | Civciv ünitesi parti bazlı düzenleme/silme/çıkarma, ünite-parti toplam senkronizasyonu, uygulama içi güncelleme bildirimi |
+| **6.7** | Tavus kuşu kuluçkası eklendi (28 gün) |
+| **6.5** | Excel/CSV rapor aktarımı ve kısmi ödeme (kalan borç) takibi eklendi |
 
-Kuluçka süresi 28 gün olarak otomatik ayarlanır
+## Katkı
 
-Hindi/Kaz ile aynı süre olduğu için ekipman planlamasında uyumlu
+Uygulamaya gir, Google hesabınla giriş yap — kendi verilerin sadece sana ait olacak şekilde hemen kullanmaya başlayabilirsin.
 
- Ne Yapabiliyor?
- 
-🏠 Kümes Yönetimi
+---
 
-Sınırsız kümes, her kümeste birden fazla ırk/grup (Brahma, Leghorn, Bıldırcın, Keklik, Güvercin...), erkek/dişi ayrımı, doğum tarihi ve yaş takibi, hayvan ekle/çıkar geçmişi
-
-🥚 Kuluçka Takibi
-
-Farklı kümeslerden çoklu yumurta kaynağı, otomatik ilerleme çubuğu ve gün sayacı, çıkım sonuçları (çıkan/boş/ölü), verim yüzdesi hesaplama, bıldırcın (17g), keklik (23g), tavuk (21g) dahil tüm türler için süre seçimi
-
-🐣 Civciv Ünitesi
-
-Manuel civciv ekleme/çıkarma, çıkım tarihi kaydı, tam hareket geçmişi, toplam giren/çıkan istatistikleri
-
-💰 Satış Modülü
-
-Tek satışta karışık ürün (hayvan + civciv + yumurta), satış stoktan otomatik düşer, müşteri kaydı, satış düzenleme/silme, türe göre filtreleme
-
-📊 Finans Takibi
-
-Kategorili gider (yem, ilaç, enerji, kümes, ekipman...), kümes bazlı gider takibi, gider düzenleme/silme, otomatik net kâr/zarar hesaplama
-
-☁️ Bulut & Güvenlik
-
-Google hesabı ile güvenli giriş, Supabase bulut veritabanı (her kullanıcı sadece kendi verisini görür), JSON yedek alma ve tam geri yükleme, çevrimdışı çalışma (PWA)
-
-📱 Mobil & Masaüstü
-
-Ana ekrana/masaüstüne uygulama olarak kurulabilir, tam ekran çalışır, iOS/Android/Windows/Mac uyumlu
-
-6.5 ile Yapılan Değişiklikler
-
-📊 Excel/CSV Aktarım (Bilgi sekmesi):
-
-Tüm Rapor → Kümesler + Satışlar + Giderler + Finansal özet tek dosyada
-Satışlar → Tarih, müşteri, ürünler, toplam, ödenen, kalan
-Giderler → Tarih, tür, açıklama, tutar, ödenen, kalan
-Kümesler → Kümes, tür, ırk, erkek, dişi, toplam
-Türkçe karakter desteği için BOM ile kaydediliyor, Excel direkt açıyor
-
-💰 Kısmi Ödeme Takibi:
-
-Satış ve gider kaydederken Ödenen Tutar girin → Kalan Borç otomatik hesaplanır
-Ödenen boş bırakılırsa tam ödenmiş sayılır
-Satış listesinde kırmızı "Ödenen / Kalan" satırı görünür, tahsil edilenlerde ✅
-Finans sayfasında da aynı şekilde gider borçları görünür
-
-📥 Ana Sayfada Bekleyen Ödemeler:
-
-Müşterilerden Alacaklarım (satışlardaki kalan)
-Ödenecek Borçlarım (giderlerdeki kalan)
-İkisi de sıfırsa "✅ Bekleyen ödeme yok" gösterilir
-
-🔄 Yedek Sonrası Otomatik Cache Temizleme:
-
-Yedek yüklendikten sonra SW önbelleği otomatik temizleniyor
-Bir sonraki açılışta taze verilerle gelecek, "veriler yükleniyor"da kalmayacak
+<div align="center">
+<sub>🐔 KümesPro — kümesini büyütürken hesabını da büyüt</sub>
+</div>
