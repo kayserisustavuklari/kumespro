@@ -2762,7 +2762,7 @@ function rSatislar(f){
     h+=`<div class="stripe-card mb8">
       <div class="row"><span class="f13 fw">${s.musteri||'Anonim'}</span><span class="cg fw f13">${fm(s.toplam)}</span></div>
       <div class="f12 c2 mt4">${fd(s.tarih)} · ${s.urunler.length} ürün</div>
-      <div class="f12 c3 mt4">${s.urunler.map(u=>`${u.adet} ${u.ad||u.tip}`).join(' + ')}</div>
+      <div class="f12 c3 mt4">${s.urunler.map(u=>`${u.adet} ${u.ad||u.irkAd||u.tip}`).join(' + ')}</div>
       ${sKalan>0?`<div class="row mt8" style="background:var(--red-l);border-radius:6px;padding:6px 10px">
         <span class="f12 fw" style="color:var(--red)">💰 Ödenen: ${fm(s.odenen||0)}</span>
         <span class="f12 fw" style="color:var(--red)">Kalan: ${fm(sKalan)}</span>
@@ -2830,15 +2830,22 @@ async function delSat(id){
     if (r.tip === 'hayvan' && r.kumesId) {
       const k = D.kumesler.find(x => x.id === r.kumesId);
       if (k && k.irklar && k.irklar.length > 0) {
-        let kalE = r.erkekAdet || 0;
-        let kalD = r.disiAdet || 0;
-        for (const irk of k.irklar) {
-          if (kalE > 0) { irk.erkek = (irk.erkek || 0) + kalE; kalE = 0; }
-          if (kalD > 0) { irk.disi = (irk.disi || 0) + kalD; kalD = 0; }
-          if (!kalE && !kalD) break;
+        const ir = r.irkId ? k.irklar.find(x => x.id === r.irkId) : null;
+        if (ir) {
+          ir.erkek = (ir.erkek || 0) + (r.erkekAdet || 0);
+          ir.disi  = (ir.disi  || 0) + (r.disiAdet || 0);
+        } else {
+          // Eski kayıt (ırk bilgisi yok): sırayla geri yükle
+          let kalE = r.erkekAdet || 0;
+          let kalD = r.disiAdet || 0;
+          for (const irk of k.irklar) {
+            if (kalE > 0) { irk.erkek = (irk.erkek || 0) + kalE; kalE = 0; }
+            if (kalD > 0) { irk.disi = (irk.disi || 0) + kalD; kalD = 0; }
+            if (!kalE && !kalD) break;
+          }
         }
         k.hareketler = k.hareketler || [];
-        k.hareketler.push({ islem: 'ekle', erkek: r.erkekAdet || 0, disi: r.disiAdet || 0, not: 'Satış iptali: ' + (s.musteri || 'Anonim'), tarih, irkAd: 'Genel' });
+        k.hareketler.push({ islem: 'ekle', erkek: r.erkekAdet || 0, disi: r.disiAdet || 0, not: 'Satış iptali: ' + (s.musteri || 'Anonim'), tarih, irkAd: ir ? ir.ad : 'Genel' });
         guncKumesler.add(k.id);
       }
     } else if (r.tip === 'civciv' && r.uniteId && r.partiId) {
@@ -2866,13 +2873,17 @@ function rSRows(){
   const kO=D.kumesler.map(k=>`<option value="${k.id}">${k.ad}</option>`).join('');
   const uO=D.civcivUniteleri.map(u=>`<option value="${u.id}">${u.ad}(${u.adet})</option>`).join('');
   document.getElementById('sUrunler').innerHTML=sRows.map((r,i)=>{
-    // Hayvan satışında seçili kümesin erkek/dişi sayısını bul
-    let erkekStok = 0, disiStok = 0, kumesAd = '';
+    // Hayvan satışında seçili kümesin/ırkın erkek/dişi sayısını bul
+    let erkekStok = 0, disiStok = 0, kumesAd = '', irkList = [];
     if (r.tip==='hayvan' && r.kumesId) {
       const k = D.kumesler.find(x=>x.id===r.kumesId);
       if (k) {
         kumesAd = k.ad;
-        (k.irklar||[]).forEach(ir => { erkekStok += (ir.erkek||0); disiStok += (ir.disi||0); });
+        irkList = (k.irklar||[]);
+        if (r.irkId) {
+          const ir = irkList.find(x=>x.id===r.irkId);
+          if (ir) { erkekStok = ir.erkek||0; disiStok = ir.disi||0; }
+        }
       }
     }
     const stokToplam = erkekStok + disiStok;
@@ -2906,7 +2917,11 @@ function rSRows(){
     }
 
     const kaynakSelect = r.tip==='hayvan'
-      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].kumesId=this.value;sRows[${i}].erkekAdet=0;sRows[${i}].disiAdet=0;rSRows()">${D.kumesler.map(k=>`<option value="${k.id}" ${k.id===r.kumesId?'selected':''}>${k.ad}</option>`).join('')}</select>`
+      ? `<select class="fs" style="flex:1;min-width:110px" onchange="sRows[${i}].kumesId=this.value;sRows[${i}].irkId=defIrk(this.value);sRows[${i}].erkekAdet=0;sRows[${i}].disiAdet=0;rSRows()">${D.kumesler.map(k=>`<option value="${k.id}" ${k.id===r.kumesId?'selected':''}>${k.ad}</option>`).join('')}</select>
+         <select class="fs" style="flex:1;min-width:140px;width:100%" onchange="sRows[${i}].irkId=this.value;sRows[${i}].erkekAdet=0;sRows[${i}].disiAdet=0;rSRows()">
+           <option value="">-- Irk seçin --</option>
+           ${irkList.map(ir=>`<option value="${ir.id}" ${ir.id===r.irkId?'selected':''}>${ir.ad} (♂${ir.erkek||0} ♀${ir.disi||0})</option>`).join('')}
+         </select>`
       : r.tip==='civciv'
       ? civcivControls
       : `<input class="fi" placeholder="Ürün adı" value="${r.ad||''}" style="flex:1" oninput="sRows[${i}].ad=this.value">`;
@@ -2914,26 +2929,29 @@ function rSRows(){
     // Hayvan satışı: erkek/dişi ayrı inputlar
     let adetBlok = '';
     if (r.tip === 'hayvan') {
+      const irkYok = !r.irkId;
       const hicYok = stokToplam === 0;
       const sadeceErkek = erkekStok > 0 && disiStok === 0;
       const sadeceDisi  = disiStok > 0 && erkekStok === 0;
 
       // Stok bilgisi rozeti
-      const stokBilgi = kumesAd ? `<div class="f11 c2" style="width:100%;margin-top:4px">
-        Stok: <span class="b bb">♂ ${erkekStok}</span> <span class="b bg" style="margin-left:4px">♀ ${disiStok}</span>
-        ${hicYok?'<span style="color:var(--red);margin-left:6px">⚠️ Stok yok!</span>':''}
-      </div>` : '';
+      const stokBilgi = irkYok
+        ? `<div class="f11 c2" style="width:100%;margin-top:4px;color:var(--ora)">ℹ️ Lütfen bir ırk seçin</div>`
+        : `<div class="f11 c2" style="width:100%;margin-top:4px">
+            Stok: <span class="b bb">♂ ${erkekStok}</span> <span class="b bg" style="margin-left:4px">♀ ${disiStok}</span>
+            ${hicYok?'<span style="color:var(--red);margin-left:6px">⚠️ Stok yok!</span>':''}
+          </div>`;
 
       adetBlok = `
         <div style="display:flex;gap:6px;width:100%;flex-wrap:wrap">
           <div style="flex:1;min-width:80px">
             <input class="fi" type="number" placeholder="♂ Erkek" value="${r.erkekAdet||''}"
-              min="0" max="${erkekStok}" ${sadeceDisi?'disabled':''}
+              min="0" max="${erkekStok}" ${(irkYok||sadeceDisi)?'disabled':''}
               oninput="sRows[${i}].erkekAdet=Math.min(${erkekStok},parseInt(this.value)||0);sRows[${i}].adet=(sRows[${i}].erkekAdet||0)+(sRows[${i}].disiAdet||0);calcSTop()">
           </div>
           <div style="flex:1;min-width:80px">
             <input class="fi" type="number" placeholder="♀ Dişi" value="${r.disiAdet||''}"
-              min="0" max="${disiStok}" ${sadeceErkek?'disabled':''}
+              min="0" max="${disiStok}" ${(irkYok||sadeceErkek)?'disabled':''}
               oninput="sRows[${i}].disiAdet=Math.min(${disiStok},parseInt(this.value)||0);sRows[${i}].adet=(sRows[${i}].erkekAdet||0)+(sRows[${i}].disiAdet||0);calcSTop()">
           </div>
           <input class="fi" type="number" placeholder="₺ Birim Fiyat" value="${r.fiyat||''}"
@@ -3002,8 +3020,9 @@ function rSRows(){
   }).join('');
   calcSTop();
 }
-function onSTC(i,v){sRows[i].tip=v;sRows[i].kumesId=D.kumesler[0]?.id||'';sRows[i].uniteId=D.civcivUniteleri[0]?.id||'';sRows[i].partiId='';sRows[i].erkekAdet=0;sRows[i].disiAdet=0;sRows[i].adet=0;rSRows()}
-function addSR(){sRows.push({tip:'hayvan',kumesId:D.kumesler[0]?.id||'',uniteId:D.civcivUniteleri[0]?.id||'',partiId:'',adet:0,erkekAdet:0,disiAdet:0,fiyat:0,ad:''});rSRows()}
+function defIrk(kid){const k=D.kumesler.find(x=>x.id===kid);const l=k&&k.irklar?k.irklar:[];return l.length===1?(l[0].id||''):''}
+function onSTC(i,v){sRows[i].tip=v;sRows[i].kumesId=D.kumesler[0]?.id||'';sRows[i].irkId=defIrk(sRows[i].kumesId);sRows[i].uniteId=D.civcivUniteleri[0]?.id||'';sRows[i].partiId='';sRows[i].erkekAdet=0;sRows[i].disiAdet=0;sRows[i].adet=0;rSRows()}
+function addSR(){const kid=D.kumesler[0]?.id||'';sRows.push({tip:'hayvan',kumesId:kid,irkId:defIrk(kid),uniteId:D.civcivUniteleri[0]?.id||'',partiId:'',adet:0,erkekAdet:0,disiAdet:0,fiyat:0,ad:''});rSRows()}
 function remSR(i){sRows.splice(i,1);rSRows()}
 
 // ─── ÖDEME HESAPLAMA ─────────────────────────────────────────
@@ -3035,10 +3054,11 @@ async function saveSat(){
       // Stok kontrolü
       const k = D.kumesler.find(x=>x.id===r.kumesId);
       if(!k){alert('Kümes bulunamadı!');return}
-      let toplamE=0, toplamD=0;
-      (k.irklar||[]).forEach(ir=>{toplamE+=(ir.erkek||0);toplamD+=(ir.disi||0)});
-      if((r.erkekAdet||0) > toplamE){alert('"'+k.ad+'" kümesinde yeterli erkek yok! (Mevcut: '+toplamE+')');return}
-      if((r.disiAdet||0)  > toplamD){alert('"'+k.ad+'" kümesinde yeterli dişi yok! (Mevcut: '+toplamD+')');return}
+      if(!r.irkId){alert('Hayvan satışı için bir ırk seçin!');return}
+      const ir = (k.irklar||[]).find(x=>x.id===r.irkId);
+      if(!ir){alert('Seçilen ırk bulunamadı!');return}
+      if((r.erkekAdet||0) > (ir.erkek||0)){alert('"'+k.ad+' / '+ir.ad+'" için yeterli erkek yok! (Mevcut: '+(ir.erkek||0)+')');return}
+      if((r.disiAdet||0)  > (ir.disi||0)){alert('"'+k.ad+' / '+ir.ad+'" için yeterli dişi yok! (Mevcut: '+(ir.disi||0)+')');return}
     } else if(r.tip==='civciv'){
       if(!r.adet||!r.fiyat){alert('Tüm ürünler için adet ve fiyat girin!');return}
       const u = D.civcivUniteleri.find(x=>x.id===r.uniteId);
@@ -3066,24 +3086,14 @@ async function saveSat(){
     if(r.tip==='hayvan'&&r.kumesId){
       const k=D.kumesler.find(x=>x.id===r.kumesId);
       if(k&&k.irklar){
-        // Erkekleri sırayla düş
-        let kalE = r.erkekAdet||0;
-        let kalD = r.disiAdet ||0;
-        for(const irk of k.irklar){
-          if(kalE>0){
-            const al=Math.min(irk.erkek||0,kalE);
-            irk.erkek=Math.max(0,(irk.erkek||0)-al);
-            kalE-=al;
-          }
-          if(kalD>0){
-            const al=Math.min(irk.disi||0,kalD);
-            irk.disi=Math.max(0,(irk.disi||0)-al);
-            kalD-=al;
-          }
-          if(!kalE && !kalD) break;
+        const irk = k.irklar.find(x=>x.id===r.irkId);
+        if(irk){
+          irk.erkek=Math.max(0,(irk.erkek||0)-(r.erkekAdet||0));
+          irk.disi =Math.max(0,(irk.disi ||0)-(r.disiAdet ||0));
+          r.irkAd = irk.ad; // satış kaydında göstermek için
         }
         k.hareketler=k.hareketler||[];
-        k.hareketler.push({islem:'cikar',erkek:r.erkekAdet||0,disi:r.disiAdet||0,not:'Satış: '+(mus||'Anonim'),tarih,irkAd:'Genel'});
+        k.hareketler.push({islem:'cikar',erkek:r.erkekAdet||0,disi:r.disiAdet||0,not:'Satış: '+(mus||'Anonim'),tarih,irkAd:irk?irk.ad:'Genel'});
       }
     }
     else if(r.tip==='civciv' && r.uniteId && r.partiId){

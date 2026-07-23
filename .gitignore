@@ -1,0 +1,9 @@
+# Yerel Capacitor APK build ortamı (GitHub'a gönderilmez)
+apk/
+
+# Kopya / gereksiz dosyalar
+sss.ico
+
+# IDE
+.idea/
+.vscode/
