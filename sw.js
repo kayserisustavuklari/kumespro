@@ -1,5 +1,5 @@
-// KümesPro Service Worker v7.0
-const CACHE = 'kumespro-v70';
+// KümesPro Service Worker v7.4
+const CACHE = 'kumespro-v74';
 
 self.addEventListener('install', () => self.skipWaiting());
 

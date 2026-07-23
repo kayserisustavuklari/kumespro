@@ -4,6 +4,10 @@ apk/
 # Kopya / gereksiz dosyalar
 sss.ico
 
+# Yayınlanmayan iç dokümanlar (README hariç)
+CLAUDE.md
+CAPACITOR_APK_REHBERI.md
+
 # IDE
 .idea/
 .vscode/

@@ -8,13 +8,13 @@
 
 _Kümesindeki her hayvanı, her kuluçkayı, her satışı ve her kuruşu tek yerden takip et._
 
-[![Uygulamayı Aç](https://img.shields.io/badge/%E2%96%B6%20Uygulamay%C4%B1%20A%C3%A7-kamilsaim.web.app-1A5F8A?style=for-the-badge)](https://kamilsaim.web.app)
+[![Uygulamayı Aç](https://img.shields.io/badge/%E2%96%B6%20Uygulamay%C4%B1%20A%C3%A7-kumespro-1A5F8A?style=for-the-badge)](https://kayserisustavuklari.github.io/kumespro/)
 &nbsp;
-[![PWA](https://img.shields.io/badge/PWA-Kurulabilir-F39C12?style=for-the-badge)](https://kamilsaim.web.app)
+[![PWA](https://img.shields.io/badge/PWA-Kurulabilir-F39C12?style=for-the-badge)](https://kayserisustavuklari.github.io/kumespro/)
 &nbsp;
-[![Android](https://img.shields.io/badge/Android-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://kamilsaim.web.app)
+[![Android](https://img.shields.io/badge/Android-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://kayserisustavuklari.github.io/kumespro/)
 
-🌐 **[kamilsaim.web.app](https://kamilsaim.web.app)** &nbsp;·&nbsp; 🔁 Yedek: [kayserisustavuklari.github.io/kumespro](https://kayserisustavuklari.github.io/kumespro/)
+🌐 **[kayserisustavuklari.github.io/kumespro](https://kayserisustavuklari.github.io/kumespro/)** &nbsp;·&nbsp; 🔁 Alternatif: [kamilsaim.web.app](https://kamilsaim.web.app)
 
 </div>
 
@@ -55,6 +55,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
+| **7.4** | Kümes kartında **son hareketler gizlenebilir** (istenirse açılır), satışlarda **arama** (müşteri/ürün/not), sürüm senkronizasyonu |
 | **7.3** | Satışta hayvan seçince kümesteki **ırk seçimi** — stok kontrolü ve stok düşümü artık seçilen ırka göre yapılıyor |
 | **7.2** | Üniteden kümese aktarım (erkek/dişi ayrımı ve ırk seçimiyle), alacaklarda müşteri bazlı kişi kartları, yeni logo ve %85 küçülen sayfa boyutu |
 | **7.1** | Android APK desteği eklendi (Capacitor ile kabuk APK, Google girişi için sistem tarayıcısı yönlendirmesi) |
