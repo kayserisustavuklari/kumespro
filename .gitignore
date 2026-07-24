@@ -1,12 +1,16 @@
 # Yerel Capacitor APK build ortamı (GitHub'a gönderilmez)
 apk/
 
+# Supabase Edge Function kaynağı (yerelde tutulur, oradan deploy edilir)
+supabase/
+
 # Kopya / gereksiz dosyalar
 sss.ico
 
 # Yayınlanmayan iç dokümanlar (README hariç)
 CLAUDE.md
 CAPACITOR_APK_REHBERI.md
+PLAY_STORE_YAYINLAMA_REHBERI.md
 
 # IDE
 .idea/

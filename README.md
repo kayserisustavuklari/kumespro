@@ -55,6 +55,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
+| **7.5** | Uygulama içinden **hesap silme** (tüm veriler + hesap kalıcı olarak silinir), gizlilik politikası sayfası — Google Play uyumluluğu |
 | **7.4** | Kümes kartında **son hareketler gizlenebilir** (istenirse açılır), satışlarda **arama** (müşteri/ürün/not), sürüm senkronizasyonu |
 | **7.3** | Satışta hayvan seçince kümesteki **ırk seçimi** — stok kontrolü ve stok düşümü artık seçilen ırka göre yapılıyor |
 | **7.2** | Üniteden kümese aktarım (erkek/dişi ayrımı ve ırk seçimiyle), alacaklarda müşteri bazlı kişi kartları, yeni logo ve %85 küçülen sayfa boyutu |
