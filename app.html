@@ -3462,6 +3462,7 @@ let isIOS     = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 let isAndroid = /Android/.test(navigator.userAgent);
 let isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
                    window.navigator.standalone === true;
+let isCapacitorNative = !!(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform());
 
 // Icon data URL'yi bul
 function getIconUrl() {
@@ -3495,7 +3496,7 @@ function updateInstallUI() {
 
   if (!card) return;
 
-  const isApk = /wv/.test(navigator.userAgent) || (isAndroid && isStandalone);
+  const isApk = isCapacitorNative || /wv/.test(navigator.userAgent) || (isAndroid && isStandalone);
 
   if (isStandalone || isApk) {
     // Zaten kurulu - uygulama olarak açılıyor
@@ -3547,7 +3548,7 @@ async function pwaCur() {
 
 // ── BANNER ────────────────────────────────────────────────────
 function showInstallBanner() {
-  const isApk = /wv/.test(navigator.userAgent) || (isAndroid && isStandalone);
+  const isApk = isCapacitorNative || /wv/.test(navigator.userAgent) || (isAndroid && isStandalone);
   if (isStandalone || isApk) return; // Zaten kurulu / APK
   const banner = document.getElementById('installBanner');
   const icon   = document.getElementById('installBannerIcon');
@@ -3601,7 +3602,7 @@ function showWelcomeModal(user) {
   const iconUrl = getIconUrl();
   if (iconEl && iconUrl) iconEl.src = iconUrl;
 
-  if (!isStandalone) {
+  if (!isStandalone && !isCapacitorNative) {
     const hint = document.getElementById('welcomeInstallHint');
     const msg  = document.getElementById('welcomeInstallMsg');
     if (hint && msg) {
@@ -3625,7 +3626,7 @@ function closeWelcome(showInstall) {
   const modal = document.getElementById('welcomeModal');
   if (modal) modal.style.display = 'none';
   localStorage.setItem('kp_welcomed', '1');
-  if (showInstall && !isStandalone) {
+  if (showInstall && !isStandalone && !isCapacitorNative) {
     setTimeout(() => showInstallBanner(), 500);
   }
 }
@@ -4310,7 +4311,7 @@ async function appBaslat(user) {
 
   if (!localStorage.getItem('kp_welcomed')) {
     setTimeout(() => showWelcomeModal(user), 400);
-  } else if (!isStandalone && !sessionStorage.getItem('bannerClosed')) {
+  } else if (!isStandalone && !isCapacitorNative && !sessionStorage.getItem('bannerClosed')) {
     setTimeout(() => showInstallBanner(), 1500);
   }
 }
