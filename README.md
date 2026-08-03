@@ -55,7 +55,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
-| **7.8** | Ana ekran widget'ı **ana sayfadaki kuluçka kartının aynısı**: yumurta sayısı, başlangıç tarihi, süre, **ilerleme çubuğu**, % tamamlandı, sepete/çıkım tarihleri ve "+N kuluçka daha" satırı |
+| **7.8** | Ana ekran widget'ı **ana sayfadaki kuluçka kartının aynısı**: yumurta sayısı, başlangıç tarihi, süre, **ilerleme çubuğu**, % tamamlandı, sepete/çıkım tarihleri ve "+N kuluçka daha" satırı — widget **serbestçe boyutlandırılabilir**, daraltıldığında sade özet görünüme geçer |
 | **7.7** | Android **ana ekran widget'ı**: çıkımı en yakın kuluçkanın kalan gün sayacı; **sepete alma (çıkım−3) ve çıkım günü bildirimleri** |
 | **7.6** | Android **geri tuşu** desteği (modal kapat → anasayfa → çift basışta çıkış), geri tuşu artık giriş ekranına düşürmüyor, **oturum dayanıklılığı** (ağ kesintisinde otomatik çıkış yapılmıyor) |
 | **7.5** | Uygulama içinden **hesap silme** (tüm veriler + hesap kalıcı olarak silinir), gizlilik politikası sayfası — Google Play uyumluluğu |
