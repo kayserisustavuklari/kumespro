@@ -217,6 +217,10 @@ async function googleGiris() {
 
 if (window.Capacitor) {
   const { App, Browser } = Capacitor.Plugins;
+
+  // Giriş ekranında geri tuşu → uygulamadan çık (geçmişte gidecek yer yok)
+  App.addListener('backButton', () => App.exitApp());
+
   App.addListener('appUrlOpen', async ({ url }) => {
     if (url && url.includes('auth-callback')) {
       try { await Browser.close(); } catch (e) {}
@@ -247,7 +251,7 @@ init();
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/kumespro/sw.js', {scope: '/kumespro/'})
-          .then(r => console.log('[SW] v7.5 Registered:', r.scope))
+          .then(r => console.log('[SW] v7.6 Registered:', r.scope))
           .catch(e => console.warn('[SW] Error:', e));
       });
     }

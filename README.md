@@ -55,6 +55,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
+| **7.6** | Android **geri tuşu** desteği (modal kapat → anasayfa → çift basışta çıkış), geri tuşu artık giriş ekranına düşürmüyor, **oturum dayanıklılığı** (ağ kesintisinde otomatik çıkış yapılmıyor) |
 | **7.5** | Uygulama içinden **hesap silme** (tüm veriler + hesap kalıcı olarak silinir), gizlilik politikası sayfası — Google Play uyumluluğu |
 | **7.4** | Kümes kartında **son hareketler gizlenebilir** (istenirse açılır), satışlarda **arama** (müşteri/ürün/not), sürüm senkronizasyonu |
 | **7.3** | Satışta hayvan seçince kümesteki **ırk seçimi** — stok kontrolü ve stok düşümü artık seçilen ırka göre yapılıyor |
