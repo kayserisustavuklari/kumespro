@@ -55,6 +55,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
+| **7.11** | Kuluçka sekmesinde **tamamlanmış kuluçkalar varsayılan olarak gizli** — "Tamamlandı (N) · Göster ▾" başlığına tıklayınca açılıp kapanır |
 | **7.10** | Kaydet butonlarında **çift kayıt koruması** (hızlı çift tıklama/dokunmada tekrar gönderimi engeller); içinde hayvan kalmayan kümesler kartta **kırmızı kenarlık + "⚠️ Boş kümes" uyarısı** ile öne çıkar |
 | **7.9** | Bilgi sekmesinde **bildirim durumu kartı**: hatırlatmaların açık olup olmadığı, kurulu hatırlatma sayısı, izin reddedilmişse elle açma yolu; bildirim izni artık ancak aktif kuluçka varken isteniyor. Gizlilik politikası Google Play uyumu için genişletildi (saklama süresi, hizmet sağlayıcılar, KVKK/GDPR hakları, çocuk gizliliği) |
 | **7.8** | Ana ekran widget'ı **ana sayfadaki kuluçka kartının aynısı**: yumurta sayısı, başlangıç tarihi, süre, **ilerleme çubuğu**, % tamamlandı, sepete/çıkım tarihleri ve "+N kuluçka daha" satırı — widget **serbestçe boyutlandırılabilir**, daraltıldığında sade özet görünüme geçer |
