@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>KümesPro - Safari'de Aç</title>
+<meta name="robots" content="noindex">
+<style>
+  :root{
+    --pri:#2f6fed; --pri-d:#1e4fbd; --pri-l:#eaf0ff;
+    --ora:#f5860a; --ora-d:#d16d00; --ora-l:#fff2e2;
+    --gr0:#1a1d23; --gr6:#f7f8fa;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg,var(--pri-l),var(--gr6));
+    font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    color:var(--gr0); padding:24px;
+  }
+  .card{
+    max-width:440px; width:100%; background:#fff; border-radius:20px;
+    padding:32px 24px; box-shadow:0 10px 40px rgba(30,79,189,.15); text-align:center;
+  }
+  .logo{font-size:52px; line-height:1}
+  h1{font-size:22px; margin:12px 0 4px; color:var(--pri-d)}
+  p{font-size:15px; line-height:1.55; color:#444; margin:10px 0}
+  .steps{
+    text-align:left; background:var(--pri-l); border-radius:14px; padding:16px 18px;
+    margin:18px 0; font-size:15px; line-height:1.7;
+  }
+  .steps b{color:var(--pri-d)}
+  .btn{
+    display:block; width:100%; padding:15px; border-radius:14px; border:none;
+    background:var(--ora); color:#fff; font-size:16px; font-weight:700;
+    text-decoration:none; margin-top:6px; cursor:pointer;
+  }
+  .btn:active{background:var(--ora-d)}
+  .hint{font-size:13px; color:#888; margin-top:16px}
+  #dots{position:relative}
+  .spin{
+    display:inline-block; width:22px; height:22px; border:3px solid var(--pri-l);
+    border-top-color:var(--pri); border-radius:50%; animation:sp 0.8s linear infinite;
+  }
+  @keyframes sp{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🥚</div>
+    <h1>KümesPro</h1>
+    <div id="status">
+      <p><span class="spin"></span></p>
+      <p>Yönlendiriliyor...</p>
+    </div>
+    <div id="manual" style="display:none">
+      <p><b>Bu sayfa Facebook/Instagram'ın kendi tarayıcısında açıldı.</b><br>
+      iOS bu tarayıcıdan "Ana Ekrana Ekle" özelliğine izin vermiyor. Devam etmek için Safari'de açmanız gerekiyor:</p>
+      <div class="steps">
+        1️⃣ Sağ üstteki (veya alttaki) <b>••• </b> menüsüne dokunun<br>
+        2️⃣ <b>"Safari'de Aç"</b> seçeneğini seçin<br>
+        3️⃣ Safari açılınca alttaki <b>Paylaş 📤</b> tuşuna dokunup <b>"Ana Ekrana Ekle"</b>'yi seçin
+      </div>
+      <a class="btn" id="fallbackBtn" href="https://kayserisustavuklari.github.io/kumespro/">Yine de Devam Et</a>
+      <p class="hint">Buton bazı cihazlarda yine bu tarayıcıda açabilir — en sağlıklısı yukarıdaki ••• menüsünden "Safari'de Aç"'tır.</p>
+    </div>
+  </div>
+
+<script>
+  var TARGET = "https://kayserisustavuklari.github.io/kumespro/";
+  var ua = navigator.userAgent || "";
+  var isIOS = /iPhone|iPad|iPod/i.test(ua);
+  var isInApp = /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Line\//i.test(ua);
+
+  function showManual(){
+    document.getElementById('status').style.display = 'none';
+    document.getElementById('manual').style.display = 'block';
+  }
+
+  if (isIOS && isInApp) {
+    // iOS + Facebook/Instagram uygulama içi tarayıcı: Safari'yi zorlamayı dene
+    var bare = location.href.replace(/^https?:\/\//, '');
+    setTimeout(showManual, 1200);
+    try { window.location = "x-safari-https://" + bare; } catch(e) {}
+  } else if (isInApp) {
+    // Android FB/Instagram tarayıcısı: harici tarayıcıya at (intent)
+    try {
+      window.location = "intent://" + TARGET.replace(/^https?:\/\//,'') +
+        "#Intent;scheme=https;package=com.android.chrome;end";
+      setTimeout(function(){ location.href = TARGET; }, 800);
+    } catch(e) { location.href = TARGET; }
+  } else {
+    // Zaten Safari/Chrome gibi normal bir tarayıcı: direkt yönlendir
+    location.href = TARGET;
+  }
+</script>
+</body>
+</html>
