@@ -3558,6 +3558,13 @@ async function webPushDurumGuncelle() {
 
   const izin = window.Notification ? Notification.permission : 'denied';
   if (izin === 'granted') {
+    // İzin var ama abonelik kaydı yoksa (ör. önceki upsert başarısız oldu veya
+    // tarayıcı aboneliği düşürdü) sessizce tekrar abone ol — false "açık" göstermeyelim
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) { webPushAboneOl(); return; }
+    } catch (e) { console.warn('[KP] Abonelik kontrolü başarısız:', e); }
     if (ikon) ikon.textContent = '✅';
     kutu.innerHTML = `<div style="color:var(--green);font-weight:600">✅ Bildirimler açık</div>
       <div class="f11 c2 mt4">Aktif kuluçkalarınız için sepete alma ve çıkım günü hatırlatmaları otomatik gönderilecek.</div>`;
