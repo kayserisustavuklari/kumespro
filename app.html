@@ -4541,7 +4541,24 @@ async function appBaslat(user) {
 
   try {
     console.log('[KP] dbYukle() çağrılıyor...');
-    await dbYukle();
+    // "JWT issued at future" Supabase tarafında projenin uykudan uyanırken
+    // GoTrue/Postgres saatlerinin anlık senkron olmamasından kaynaklanan geçici
+    // bir hata — bu durumda birkaç saniye bekleyip sessizce tekrar deniyoruz.
+    for (let deneme = 0; ; deneme++) {
+      try {
+        await dbYukle();
+        break;
+      } catch (err) {
+        const gecici = /issued at future/i.test(err.message || '');
+        if (gecici && deneme < 3) {
+          console.warn('[KP] Geçici JWT hatası, tekrar deneniyor:', deneme + 1);
+          if (ltEl) ltEl.textContent = 'Sunucu senkronize oluyor, tekrar deneniyor... (' + (deneme + 1) + '/3)';
+          await new Promise(r => setTimeout(r, 3000));
+          continue;
+        }
+        throw err;
+      }
+    }
     console.log('[KP] dbYukle() tamam:',
       'kümes=' + D.kumesler.length,
       'kuluçka=' + D.kuluckalar.length,
