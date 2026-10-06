@@ -14,7 +14,7 @@ _Kümesindeki her hayvanı, her kuluçkayı, her satışı ve her kuruşu tek ye
 &nbsp;
 [![Android](https://img.shields.io/badge/Android-APK-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://kayserisustavuklari.github.io/kumespro/)
 
-🌐 **[kayserisustavuklari.github.io/kumespro](https://kayserisustavuklari.github.io/kumespro/)** &nbsp;·&nbsp; 🔁 Alternatif: [kamilsaim.web.app](https://kamilsaim.web.app)
+🌐 **[kayserisustavuklari.github.io/kumespro](https://kayserisustavuklari.github.io/kumespro/)** &nbsp;·&nbsp; 🧰 Diğer uygulamalarım: [kamilsaim.web.app](https://kamilsaim.web.app)
 
 </div>
 
@@ -31,7 +31,7 @@ Defter tutmak yerine telefonundan birkaç dokunuşla kaydet, uygulama senin içi
 1. **Kümes oluştur** — kümes adını, türünü ve ırklarını gir, erkek/dişi sayılarını gir
 2. **Kuluçkaya başlat** — hangi kümeslerden yumurta aldığını, kaç yumurta koyduğunu kaydet; uygulama gün sayacını otomatik işletir
 3. **Çıkım kaydet** — kuluçka bitince çıkan/boş/ölü sayılarını gir, verim yüzdesi otomatik hesaplanır; çıkan civcivler istersen doğrudan civciv ünitesine aktarılır
-4. **Satış ve gider işle** — satılan hayvan/civciv/yumurdayı ve yem/ilaç/enerji giderlerini kaydet, kısmi ödemeleri takip et
+4. **Satış ve gider işle** — satılan hayvan/civciv/yumurtayı ve yem/ilaç/enerji giderlerini kaydet, kısmi ödemeleri takip et
 5. **Sezon sonunda arşivle** — tek tıkla mevcut sezonu arşivle, yeni sezona sıfırdan başla; eski sezonlara istediğin zaman geri dönüp bakabilirsin
 
 ## ✨ Öne çıkan özellikler
@@ -39,17 +39,18 @@ Defter tutmak yerine telefonundan birkaç dokunuşla kaydet, uygulama senin içi
 |  |  |
 |---|---|
 | 🏠 **Sınırsız kümes yönetimi** | Her kümeste birden fazla ırk/grup, erkek/dişi ayrımı, giriş/çıkış geçmişi |
-| 🥚 **Kuluçka takibi** | Çoklu yumurta kaynağı, otomatik gün sayacı, tür bazlı süre (güvercin, tavuk, bıldırcın, keklik, tavus...), çıkım sonuçları ve verim yüzdesi |
+| 🥚 **Kuluçka takibi** | Çoklu yumurta kaynağı, otomatik gün sayacı, tür bazlı süre (güvercin, tavuk, bıldırcın, keklik, tavus...), çıkım sonuçları ve verim yüzdesi; çıkım tarihi geçip sonucu girilmeyen kuluçkalar kırmızı uyarıyla öne çıkar |
+| 🔔 **Hatırlatmalar** | Sepete alma (çıkım−3), çıkım günü ve "çıkım girilmedi" bildirimleri — Android'de yerel bildirim + ana ekran widget'ı, iOS/web'de ana ekrana kurulu PWA'ya push bildirimi |
 | 🐣 **Civciv/yavru ünitesi** | Parti bazlı ekleme/çıkarma, tam hareket geçmişi, kalan adet takibi; yaşı gelen hayvanları tek tıkla erkek/dişi ayrımıyla kümese aktar |
 | 💰 **Satış modülü** | Tek satışta karışık ürün, **ırk seçerek hayvan satışı**, kısmi ödeme ve kalan borç takibi, tek tıkla "alındı"; alacaklar müşteri bazlı kartlarda |
 | 📊 **Finans takibi** | Kategorili gider kaydı, kümes bazlı raporlama, otomatik net kâr/zarar |
-| 🌱 **Sezon arşivi** | Sezonu anlık görüntüyle arşivle, geçmiş sezonları istediğin zaman incele |
-| ☁️ **Bulut & güvenlik** | Google ile giriş, JSON yedek alma/geri yükleme, çevrimdışı çalışan PWA |
+| 🌱 **Sezon arşivi** | Sezonu anlık görüntüyle arşivle, geçmiş sezonları istediğin zaman incele; Yıl Sonu işlemi öncesinde de otomatik arşiv alınır |
+| ☁️ **Bulut & güvenlik** | Google ile giriş, veriler bulutta; JSON yedek alma/geri yükleme ve son yedeğin üzerinden 30 gün geçince hatırlatma. İnternet bağlantısı gerekir |
 | 📱 **Her yerde çalışır** | Tarayıcıdan, ana ekrana kurulu PWA olarak veya Android APK olarak |
 
 ## 🛠 Teknoloji
 
-Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir web uygulaması; veritabanı ve kimlik doğrulama için [Supabase](https://supabase.com) kullanır, **[kamilsaim.web.app](https://kamilsaim.web.app)** ([Firebase Hosting](https://firebase.google.com/products/hosting)) üzerinden yayınlanır. Aynı kod tabanı [Capacitor](https://capacitorjs.com) ile paketlenerek Android APK olarak da çalışır.
+Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir web uygulaması; veritabanı, kimlik doğrulama ve zamanlanmış bildirimler (Edge Functions + pg_cron) için [Supabase](https://supabase.com) kullanır, [GitHub Pages](https://pages.github.com) üzerinden yayınlanır. Android APK, [Capacitor](https://capacitorjs.com) ile hazırlanmış bir kabuktur ve sayfaları doğrudan GitHub Pages'ten yükler — bu yüzden web'e gelen her güncelleme APK'ya da anında yansır.
 
 ## 🕘 Sürüm Geçmişi
 
