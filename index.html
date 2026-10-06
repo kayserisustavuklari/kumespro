@@ -19,7 +19,7 @@
   <meta name="msapplication-TileColor" content="#1A5F8A">
   <meta name="msapplication-TileImage" content="icon-192.png">
   <link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2"></script>
 <style>
 :root{
   --pri:#2E7FCC; --pri-d:#1A5C9E; --pri-l:#E8F3FC;
@@ -251,7 +251,7 @@ init();
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/kumespro/sw.js', {scope: '/kumespro/'})
-          .then(r => console.log('[SW] v7.12 Registered:', r.scope))
+          .then(r => console.log('[SW] v7.13 Registered:', r.scope))
           .catch(e => console.warn('[SW] Error:', e));
       });
     }
