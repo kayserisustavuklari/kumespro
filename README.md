@@ -56,6 +56,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
+| **7.18** | Apple ile girişte e-posta gizlendiyse hesap kartında anlamsız yönlendirme adresi yerine **Apple Hesabı · e-posta gizli** yazıyor |
 | **7.17** | **Apple ile Giriş açıldı**; uygulamadaki tüm uyarı ve onay pencereleri (silme, eksik bilgi, hata) tarayıcının eski kutuları yerine uygulamaya uygun yeni tasarımla açılıyor |
 | **7.16** | **iPhone uygulamasına hazırlık**: giriş ekranına *Apple ile Giriş* düğmesi (Apple kurulumu tamamlanınca açılacak); iPhone uygulamasında yedek ve Excel dosyaları paylaşım menüsüyle (Dosyalar'a Kaydet) veriliyor; bildirim kartında iPhone ayar yolu |
 | **7.15** | **Satış düzenlemede stok artık iki kez düşmüyor** (sadece fiyat/ödeme değişirse stoğa dokunulmaz, adet değişirse yalnızca fark yansır); satış kaydı yalnızca etkilenen kümes/üniteyi kaydeder (çok cihazda üzerine yazma riski azaldı); çıkımdan 2 gün sonra **"Çıkım girilmedi" bildirimi** (Android + iOS/web push); Yıl Sonu işlemi öncesi **otomatik sezon arşivi**; Bilgi sekmesinde **son yedek tarihi** ve 30 günü geçince hatırlatma; isimlerdeki `<` `>` işaretleri ekranı bozmasın diye temizleniyor |
