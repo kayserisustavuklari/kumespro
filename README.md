@@ -56,6 +56,7 @@ Vanilla JavaScript ile yazılmış, build aracı gerektirmeyen tek dosyalık bir
 
 | Sürüm | Öne çıkanlar |
 |-------|--------------|
+| **7.20** | iPhone uygulamasında da yeni sürüm çıkınca **güncelleme şeridi** görünüyor; Bilgi sekmesindeki gereksiz "Uygulama Kurulumu" bölümü iPhone uygulamasında gizlendi |
 | **7.19** | iPhone uygulamasında üst başlık artık dinamik ada/çentik altında kalmıyor, alt menü ana ekran çubuğuyla çakışmıyor; uygulama içinden açılışta karşılama penceresinde "ana ekrana ekle" seçeneği gösterilmiyor |
 | **7.18** | Apple ile girişte e-posta gizlendiyse hesap kartında anlamsız yönlendirme adresi yerine **Apple Hesabı · e-posta gizli** yazıyor |
 | **7.17** | **Apple ile Giriş açıldı**; uygulamadaki tüm uyarı ve onay pencereleri (silme, eksik bilgi, hata) tarayıcının eski kutuları yerine uygulamaya uygun yeni tasarımla açılıyor |
